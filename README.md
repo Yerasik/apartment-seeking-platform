@@ -9,7 +9,7 @@ A GitHub Pages-hosted website for advertising flats, tracking clicks and landlor
 - **Landlord message templates** — pre-filled message mentioning your *Renting Together* group
 - **Admin panel** — add, edit, and hide apartments; view stats; customize everything
 - **Telegram announcements** — auto-post new flats to your community group
-- **Export/Import** — download JSON to commit to GitHub for permanent storage
+- **Auto images from listing links** — pulls preview images from the original posting (like WhatsApp link previews); manual URL as fallback
 
 ## Quick start (local)
 
@@ -39,10 +39,11 @@ Your site will be live at: `https://<username>.github.io/apartment-seeking-platf
 ### Add a flat
 
 1. Go to **Admin** → **Add apartment**
-2. Fill in title, address, price, kitchen type, listing URL, landlord contact, etc.
-3. Check **Post announcement to community group** to notify Telegram
-4. Click **Save apartment**
-5. Go to **Export / Import** → **Export apartments.json** and commit it to keep data permanent
+2. Paste the **listing URL** — the image is fetched automatically from the page (like WhatsApp link previews)
+3. Fill in price, rooms, kitchen, contact, etc. Only add a manual image URL if there is no link or auto-fetch fails
+4. Check **Post announcement to WhatsApp group** to send the announcement
+5. Click **Save apartment**
+6. Go to **Export / Import** → **Export apartments.json** and commit it to keep data permanent
 
 ### Contact a landlord
 

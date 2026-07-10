@@ -121,11 +121,22 @@
             </div>
             <div class="form-group">
               <label for="apt-listing-url">Listing URL</label>
-              <input type="url" id="apt-listing-url" placeholder="https://..." />
+              <div class="input-with-button">
+                <input type="url" id="apt-listing-url" placeholder="https://..." />
+                <button type="button" class="btn btn-secondary btn-sm" id="fetch-from-link">Fetch preview</button>
+              </div>
+              <p class="form-hint">Paste the original posting link — the image is pulled automatically (like WhatsApp link previews).</p>
             </div>
             <div class="form-group">
-              <label for="apt-image-url">Image URL (optional)</label>
-              <input type="url" id="apt-image-url" placeholder="https://..." />
+              <label for="apt-image-url">Image URL <span class="label-optional">(manual override)</span></label>
+              <input type="url" id="apt-image-url" placeholder="Only needed if there is no listing link" />
+              <p class="form-hint">Leave empty to use the image from the listing page. Fill in only if auto-fetch fails or there is no link.</p>
+            </div>
+            <div class="image-preview-wrap" id="image-preview-wrap" hidden>
+              <p class="form-hint">Preview from listing:</p>
+              <div class="image-preview-box">
+                <img id="image-preview" alt="Listing preview" />
+              </div>
             </div>
             <div class="form-row">
               <div class="form-group">
@@ -157,9 +168,9 @@
             </div>
             <div class="form-group">
               <label>
-                <input type="checkbox" id="apt-announce" checked /> Post announcement to community group
+                <input type="checkbox" id="apt-announce" checked /> Post announcement to WhatsApp group
               </label>
-              <p class="form-hint">Requires Telegram webhook URL in Settings</p>
+              <p class="form-hint">Opens WhatsApp with a pre-filled message for your announcement group</p>
             </div>
             <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
               <button type="submit" class="btn btn-primary">Save apartment</button>
@@ -213,8 +224,27 @@
               <textarea id="cfg-message-template" rows="4"></textarea>
               <p class="form-hint">Variables: {groupName}, {title}, {address}, {price}, {currency}</p>
             </div>
+            <hr style="border: none; border-top: 1px solid var(--border); margin: 1.5rem 0;" />
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">WhatsApp announcements</p>
             <div class="form-group">
-              <label for="cfg-announcement-template">Announcement template (Telegram)</label>
+              <label for="cfg-whatsapp-template">WhatsApp announcement template</label>
+              <textarea id="cfg-whatsapp-template" rows="8"></textarea>
+              <p class="form-hint">Variables: {title}, {address}, {price}, {currency}, {rooms}, {kitchen}, {availableFrom}, {description}, {listingUrl}. Use *text* for bold in WhatsApp.</p>
+            </div>
+            <div class="form-group">
+              <label for="cfg-whatsapp-phone">Announcement phone number (optional)</label>
+              <input type="text" id="cfg-whatsapp-phone" placeholder="e.g. 85212345678 (country code, no +)" />
+              <p class="form-hint">If set, opens a chat to this number with the message pre-filled. Leave empty to pick your group manually.</p>
+            </div>
+            <div class="form-group">
+              <label for="cfg-whatsapp-group">WhatsApp group invite link (optional)</label>
+              <input type="url" id="cfg-whatsapp-group" placeholder="https://chat.whatsapp.com/..." />
+              <p class="form-hint">Also opens your announcement group so you can paste the message (copied automatically).</p>
+            </div>
+            <hr style="border: none; border-top: 1px solid var(--border); margin: 1.5rem 0;" />
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Optional: Telegram (auto-post via webhook)</p>
+            <div class="form-group">
+              <label for="cfg-announcement-template">Telegram announcement template</label>
               <textarea id="cfg-announcement-template" rows="6"></textarea>
               <p class="form-hint">Variables: {title}, {address}, {price}, {currency}, {rooms}, {kitchen}, {availableFrom}, {description}, {listingUrl}</p>
             </div>

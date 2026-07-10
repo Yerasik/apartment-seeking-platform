@@ -636,9 +636,56 @@ a:hover {
   font-size: 0.85rem;
 }
 
-.card-inactive {
-  opacity: 0.55;
+.input-with-button {
+  display: flex;
+  gap: 0.5rem;
 }
+
+.input-with-button input {
+  flex: 1;
+}
+
+.label-optional {
+  font-weight: 400;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.image-preview-wrap {
+  margin-bottom: 1rem;
+}
+
+.image-preview-box {
+  margin-top: 0.5rem;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  max-width: 320px;
+  aspect-ratio: 16 / 10;
+}
+
+.image-preview-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.card-image img.img-fallback-hidden {
+  display: none;
+}
+
+.card-image .img-placeholder {
+  font-size: 3rem;
+  color: var(--text-muted);
+}
+
+.image-loading {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
 
 .click-count {
   font-size: 0.75rem;

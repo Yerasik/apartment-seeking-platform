@@ -23,17 +23,89 @@ export function buildContactMessage(apartment, config) {
 }
 
 export function buildAnnouncement(apartment, config) {
-  return formatTemplate(config.announcementTemplate, {
+  return formatTemplate(config.announcementTemplate, announcementData(apartment));
+}
+
+export function buildWhatsAppAnnouncement(apartment, config) {
+  const template =
+    config.whatsappAnnouncementTemplate ||
+    config.announcementTemplate?.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$2') ||
+    defaultWhatsAppTemplate();
+
+  return formatTemplate(template, {
+    ...announcementData(apartment),
+    groupName: config.groupName,
+  });
+}
+
+function announcementData(apartment) {
+  return {
     title: apartment.title,
     address: apartment.address,
     price: apartment.price,
     currency: apartment.currency,
     rooms: apartment.rooms,
     kitchen: apartment.kitchen,
+    bathroom: apartment.bathroom,
     availableFrom: apartment.availableFrom,
     description: apartment.description,
     listingUrl: apartment.listingUrl,
-  });
+    groupName: apartment.groupName,
+  };
+}
+
+function defaultWhatsAppTemplate() {
+  return `🏠 *New flat available!*
+
+*{title}*
+📍 {address}
+💰 {price} {currency}/month
+🛏 {rooms} room(s) · 🍳 Kitchen: {kitchen}
+📅 Available from: {availableFrom}
+
+{description}
+
+🔗 {listingUrl}`;
+}
+
+export async function sendWhatsAppAnnouncement(apartment, config) {
+  const text = buildWhatsAppAnnouncement(apartment, config);
+
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    /* clipboard may be blocked until user gesture — that's fine */
+  }
+
+  const phone = config.whatsappAnnouncePhone?.replace(/\D/g, '');
+  const encoded = encodeURIComponent(text);
+
+  let url;
+  if (phone) {
+    url = `https://wa.me/${phone}?text=${encoded}`;
+  } else {
+    url = `https://wa.me/?text=${encoded}`;
+  }
+
+  window.open(url, '_blank', 'noopener');
+
+  if (config.whatsappGroupLink) {
+    setTimeout(() => {
+      window.open(config.whatsappGroupLink, '_blank', 'noopener');
+    }, 600);
+  }
+
+  return {
+    ok: true,
+    text,
+    message: phone
+      ? 'WhatsApp opened with your announcement ready to send.'
+      : 'WhatsApp opened — select your announcement group and tap Send. Message copied to clipboard.',
+  };
+}
+
+export async function sendCommunityAnnouncement(apartment, config) {
+  return sendWhatsAppAnnouncement(apartment, config);
 }
 
 export async function sendTelegramAnnouncement(apartment, config) {

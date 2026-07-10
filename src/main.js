@@ -8,6 +8,7 @@ import {
   openContactChannel,
   getContactLabel,
 } from './lib/messaging.js';
+import { resolveApartmentImage } from './lib/linkPreview.js';
 
 let config = {};
 let apartments = [];
@@ -64,10 +65,14 @@ async function renderApartments() {
         sessionStorage.setItem(viewedKey, '1');
       }
 
+      const imageUrl = await resolveApartmentImage(apt, config);
+
       return `
         <article class="apartment-card" data-id="${apt.id}">
           <div class="card-image">
-            ${apt.imageUrl ? `<img src="${apt.imageUrl}" alt="${apt.title}" loading="lazy" />` : '🏠'}
+            ${imageUrl
+              ? `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(apt.title)}" loading="lazy" onerror="this.classList.add('img-fallback-hidden');this.nextElementSibling.hidden=false" /><span class="img-placeholder" hidden>🏠</span>`
+              : '<span class="img-placeholder">🏠</span>'}
           </div>
           <div class="card-body">
             <h3 class="card-title">${escapeHtml(apt.title)}</h3>

@@ -8,7 +8,8 @@ import {
   showToast,
 } from './lib/storage.js';
 import { getTotalStats, getApartmentStats, resetStats } from './lib/tracker.js';
-import { sendTelegramAnnouncement } from './lib/messaging.js';
+import { sendCommunityAnnouncement } from './lib/messaging.js';
+import { fetchListingPreview } from './lib/linkPreview.js';
 
 let config = {};
 let apartments = [];
@@ -37,6 +38,7 @@ async function init() {
 
   setupNavigation();
   setupApartmentForm();
+  setupListingPreview();
   setupSettingsForm();
   setupExport();
 }
@@ -79,7 +81,7 @@ async function renderApartmentsTable() {
           <td>${apt.active !== false ? '✅ Active' : '⏸ Hidden'}</td>
           <td style="white-space: nowrap;">
             <button class="btn btn-secondary btn-sm edit-apt" data-id="${apt.id}">Edit</button>
-            <button class="btn btn-primary btn-sm announce-apt" data-id="${apt.id}">📢</button>
+            <button class="btn btn-success btn-sm announce-apt" data-id="${apt.id}" title="Post to WhatsApp">💬</button>
             <button class="btn btn-danger btn-sm delete-apt" data-id="${apt.id}">✕</button>
           </td>
         </tr>
@@ -127,6 +129,16 @@ function editApartment(id) {
   document.getElementById('apt-active').checked = apt.active !== false;
   document.getElementById('apt-announce').checked = false;
 
+  if (apt.imageUrl) {
+    document.getElementById('image-preview').src = apt.imageUrl;
+    document.getElementById('image-preview-wrap').hidden = false;
+  } else if (apt.listingUrl) {
+    document.getElementById('image-preview-wrap').hidden = true;
+    loadPreviewFromLink(false);
+  } else {
+    document.getElementById('image-preview-wrap').hidden = true;
+  }
+
   switchSection('add');
 }
 
@@ -142,9 +154,9 @@ async function announceApartment(id) {
   const apt = apartments.find((a) => a.id === id);
   if (!apt) return;
 
-  const result = await sendTelegramAnnouncement(apt, config);
+  const result = await sendCommunityAnnouncement(apt, config);
   if (result.ok) {
-    showToast('Announcement sent to community group!');
+    showToast(result.message);
   } else {
     showToast(result.error, 'error');
   }
@@ -159,6 +171,75 @@ function switchSection(name) {
   });
 }
 
+function setupListingPreview() {
+  const listingInput = document.getElementById('apt-listing-url');
+  const imageInput = document.getElementById('apt-image-url');
+  const fetchBtn = document.getElementById('fetch-from-link');
+  let fetchTimer;
+
+  fetchBtn.addEventListener('click', () => loadPreviewFromLink(true));
+
+  listingInput.addEventListener('blur', () => {
+    if (!imageInput.value.trim() && listingInput.value.trim()) {
+      loadPreviewFromLink(false);
+    }
+  });
+
+  listingInput.addEventListener('input', () => {
+    clearTimeout(fetchTimer);
+    if (!imageInput.value.trim()) {
+      fetchTimer = setTimeout(() => {
+        if (listingInput.value.trim()) loadPreviewFromLink(false);
+      }, 800);
+    }
+  });
+}
+
+async function loadPreviewFromLink(showErrors = false) {
+  const listingUrl = document.getElementById('apt-listing-url').value.trim();
+  if (!listingUrl) {
+    if (showErrors) showToast('Enter a listing URL first', 'error');
+    return;
+  }
+
+  const fetchBtn = document.getElementById('fetch-from-link');
+  fetchBtn.disabled = true;
+  fetchBtn.textContent = 'Fetching…';
+
+  try {
+    const preview = await fetchListingPreview(listingUrl, config);
+    const previewWrap = document.getElementById('image-preview-wrap');
+    const previewImg = document.getElementById('image-preview');
+
+    if (preview.imageUrl) {
+      document.getElementById('apt-image-url').value = preview.imageUrl;
+      previewImg.src = preview.imageUrl;
+      previewWrap.hidden = false;
+
+      if (!document.getElementById('apt-title').value.trim() && preview.title) {
+        document.getElementById('apt-title').value = preview.title;
+      }
+      if (!document.getElementById('apt-description').value.trim() && preview.description) {
+        document.getElementById('apt-description').value = preview.description.slice(0, 500);
+      }
+
+      showToast('Image loaded from listing link');
+    } else {
+      previewWrap.hidden = true;
+      if (showErrors) {
+        showToast('No image found on that page — add an image URL manually', 'error');
+      }
+    }
+  } catch (err) {
+    if (showErrors) {
+      showToast(`Could not fetch preview: ${err.message}`, 'error');
+    }
+  } finally {
+    fetchBtn.disabled = false;
+    fetchBtn.textContent = 'Fetch preview';
+  }
+}
+
 function setupApartmentForm() {
   document.getElementById('form-cancel').addEventListener('click', () => {
     resetForm();
@@ -167,6 +248,18 @@ function setupApartmentForm() {
 
   document.getElementById('apartment-form').addEventListener('submit', async (e) => {
     e.preventDefault();
+
+    let imageUrl = document.getElementById('apt-image-url').value.trim();
+    const listingUrl = document.getElementById('apt-listing-url').value.trim();
+
+    if (!imageUrl && listingUrl) {
+      try {
+        const preview = await fetchListingPreview(listingUrl, config);
+        imageUrl = preview.imageUrl || '';
+      } catch {
+        /* manual fallback */
+      }
+    }
 
     const apt = {
       id: editingId || generateId(),
@@ -179,8 +272,8 @@ function setupApartmentForm() {
       bathroom: document.getElementById('apt-bathroom').value,
       furnished: document.getElementById('apt-furnished').value === 'true',
       availableFrom: document.getElementById('apt-available').value || '',
-      listingUrl: document.getElementById('apt-listing-url').value.trim(),
-      imageUrl: document.getElementById('apt-image-url').value.trim(),
+      listingUrl,
+      imageUrl,
       landlordContact: document.getElementById('apt-contact').value.trim(),
       contactType: document.getElementById('apt-contact-type').value,
       description: document.getElementById('apt-description').value.trim(),
@@ -204,9 +297,9 @@ function setupApartmentForm() {
 
     const shouldAnnounce = document.getElementById('apt-announce').checked;
     if (shouldAnnounce) {
-      const result = await sendTelegramAnnouncement(apt, config);
+      const result = await sendCommunityAnnouncement(apt, config);
       if (result.ok) {
-        showToast('Apartment saved & announcement sent!');
+        showToast(`Apartment saved! ${result.message}`);
       } else {
         showToast(`Saved, but announcement failed: ${result.error}`, 'error');
       }
@@ -228,6 +321,8 @@ function resetForm() {
   document.getElementById('apt-rooms').value = 1;
   document.getElementById('apt-active').checked = true;
   document.getElementById('apt-announce').checked = true;
+  document.getElementById('image-preview-wrap').hidden = true;
+  document.getElementById('image-preview').removeAttribute('src');
 }
 
 async function renderStats() {
@@ -270,6 +365,9 @@ function populateSettingsForm() {
   document.getElementById('cfg-tagline').value = config.tagline || '';
   document.getElementById('cfg-group-name').value = config.groupName || '';
   document.getElementById('cfg-message-template').value = config.contactMessageTemplate || '';
+  document.getElementById('cfg-whatsapp-template').value = config.whatsappAnnouncementTemplate || '';
+  document.getElementById('cfg-whatsapp-phone').value = config.whatsappAnnouncePhone || '';
+  document.getElementById('cfg-whatsapp-group').value = config.whatsappGroupLink || '';
   document.getElementById('cfg-announcement-template').value = config.announcementTemplate || '';
   document.getElementById('cfg-telegram').value = config.telegramWebhookUrl || '';
   document.getElementById('cfg-admin-password').value = config.adminPassword || '';
@@ -287,6 +385,9 @@ function setupSettingsForm() {
       tagline: document.getElementById('cfg-tagline').value.trim(),
       groupName: document.getElementById('cfg-group-name').value.trim(),
       contactMessageTemplate: document.getElementById('cfg-message-template').value,
+      whatsappAnnouncementTemplate: document.getElementById('cfg-whatsapp-template').value,
+      whatsappAnnouncePhone: document.getElementById('cfg-whatsapp-phone').value.trim(),
+      whatsappGroupLink: document.getElementById('cfg-whatsapp-group').value.trim(),
       announcementTemplate: document.getElementById('cfg-announcement-template').value,
       telegramWebhookUrl: document.getElementById('cfg-telegram').value.trim(),
       adminPassword: document.getElementById('cfg-admin-password').value.trim(),
