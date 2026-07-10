@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Renting Together — Flat Listings</title>
+    <link rel="stylesheet" href="/src/styles/main.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container">
+        <div class="logo">
+          <span class="logo-icon">🏠</span>
+          <div>
+            <div id="site-name">Renting Together</div>
+            <div class="tagline" id="site-tagline">Find flats & flatmates together</div>
+          </div>
+        </div>
+        <nav class="nav-links">
+          <a href="#listings">Listings</a>
+          <a href="admin.html">Admin</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero container">
+        <h1>Available Flats</h1>
+        <p id="hero-description">
+          Browse shared flats and reach out to landlords on behalf of our community group.
+        </p>
+        <div class="stats-bar" id="stats-bar">
+          <div class="stat-pill">🏠 <strong id="stat-listings">0</strong> active listings</div>
+        </div>
+      </section>
+
+      <section class="container" id="listings">
+        <div class="apartments-grid" id="apartments-grid"></div>
+        <div class="empty-state" id="empty-state" hidden>
+          <div class="icon">🏘️</div>
+          <p>No active listings yet. Add apartments in the <a href="admin.html">admin panel</a>.</p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container">
+        <p>Part of the <strong id="footer-group">Renting Together</strong> community</p>
+      </div>
+    </footer>
+
+    <!-- Contact modal -->
+    <div class="modal-overlay" id="contact-modal">
+      <div class="modal">
+        <div class="modal-header">
+          <h2>Contact Landlord / Agency</h2>
+          <button class="modal-close" id="modal-close" aria-label="Close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p style="color: var(--text-muted); font-size: 0.9rem;">
+            This message introduces you as a member of our community group. Review it, then send via your preferred channel.
+          </p>
+          <div class="message-preview" id="message-preview"></div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="copy-message">📋 Copy message</button>
+          <button class="btn btn-primary" id="send-message">Send to landlord</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

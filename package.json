@@ -1,0 +1,14 @@
+{
+  "name": "renting-together-platform",
+  "version": "1.0.0",
+  "description": "Flat listings, click tracking, and community announcements for Renting Together",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^6.2.0"
+  }
+}

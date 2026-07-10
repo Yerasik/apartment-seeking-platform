@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin — Renting Together</title>
+    <link rel="stylesheet" href="/src/styles/main.css" />
+  </head>
+  <body>
+    <!-- Login -->
+    <div class="login-screen" id="login-screen">
+      <div class="login-card">
+        <h1>🔐 Admin Panel</h1>
+        <p>Manage flats, track stats, and send announcements</p>
+        <form id="login-form">
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" placeholder="Enter admin password" required />
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">Sign in</button>
+        </form>
+        <p class="form-hint" style="margin-top: 1rem;">Default password: <code>renting-together</code></p>
+        <a href="index.html" style="display: block; margin-top: 1rem; font-size: 0.85rem;">← Back to listings</a>
+      </div>
+    </div>
+
+    <!-- Admin layout -->
+    <div class="admin-layout" id="admin-layout" hidden>
+      <aside class="admin-sidebar">
+        <h2>🏠 Admin</h2>
+        <ul class="admin-nav">
+          <li><button class="active" data-section="apartments">📋 Apartments</button></li>
+          <li><button data-section="add">➕ Add apartment</button></li>
+          <li><button data-section="stats">📊 Statistics</button></li>
+          <li><button data-section="settings">⚙️ Settings</button></li>
+          <li><button data-section="export">💾 Export / Import</button></li>
+        </ul>
+        <div style="margin-top: 2rem; padding: 0 0.5rem;">
+          <a href="index.html" style="font-size: 0.85rem; color: var(--text-muted);">← View site</a>
+        </div>
+      </aside>
+
+      <main class="admin-main">
+        <!-- Apartments list -->
+        <section class="admin-section active" id="section-apartments">
+          <h1>Apartments</h1>
+          <table class="data-table" id="apartments-table">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Price</th>
+                <th>Rooms</th>
+                <th>Kitchen</th>
+                <th>Clicks</th>
+                <th>Messages</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="apartments-tbody"></tbody>
+          </table>
+        </section>
+
+        <!-- Add / Edit apartment -->
+        <section class="admin-section" id="section-add">
+          <h1 id="form-title">Add apartment</h1>
+          <form id="apartment-form" style="max-width: 640px;">
+            <input type="hidden" id="apt-id" />
+            <div class="form-group">
+              <label for="apt-title">Title *</label>
+              <input type="text" id="apt-title" required placeholder="Sunny 2BR near City Center" />
+            </div>
+            <div class="form-group">
+              <label for="apt-address">Address *</label>
+              <input type="text" id="apt-address" required placeholder="Street, District" />
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="apt-price">Price *</label>
+                <input type="number" id="apt-price" required min="0" placeholder="850" />
+              </div>
+              <div class="form-group">
+                <label for="apt-currency">Currency</label>
+                <input type="text" id="apt-currency" value="EUR" placeholder="EUR" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="apt-rooms">Rooms</label>
+                <input type="number" id="apt-rooms" min="1" value="1" />
+              </div>
+              <div class="form-group">
+                <label for="apt-kitchen">Kitchen</label>
+                <select id="apt-kitchen">
+                  <option value="separate">Separate kitchen</option>
+                  <option value="kitchenette">Kitchenette</option>
+                  <option value="shared">Shared kitchen</option>
+                  <option value="none">No kitchen</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="apt-bathroom">Bathroom</label>
+                <select id="apt-bathroom">
+                  <option value="private">Private</option>
+                  <option value="shared">Shared</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="apt-furnished">Furnished</label>
+                <select id="apt-furnished">
+                  <option value="true">Yes</option>
+                  <option value="false">No</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="apt-available">Available from</label>
+              <input type="date" id="apt-available" />
+            </div>
+            <div class="form-group">
+              <label for="apt-listing-url">Listing URL</label>
+              <input type="url" id="apt-listing-url" placeholder="https://..." />
+            </div>
+            <div class="form-group">
+              <label for="apt-image-url">Image URL (optional)</label>
+              <input type="url" id="apt-image-url" placeholder="https://..." />
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="apt-contact">Landlord / Agency contact</label>
+                <input type="text" id="apt-contact" placeholder="email, phone, or @telegram" />
+              </div>
+              <div class="form-group">
+                <label for="apt-contact-type">Contact type</label>
+                <select id="apt-contact-type">
+                  <option value="email">Email</option>
+                  <option value="phone">Phone / WhatsApp</option>
+                  <option value="telegram">Telegram</option>
+                  <option value="other">Other (copy only)</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="apt-description">Description</label>
+              <textarea id="apt-description" placeholder="Details about the flat, flatmates, etc."></textarea>
+            </div>
+            <div class="form-group">
+              <label for="apt-tags">Tags (comma-separated)</label>
+              <input type="text" id="apt-tags" placeholder="pet-friendly, students-welcome" />
+            </div>
+            <div class="form-group">
+              <label>
+                <input type="checkbox" id="apt-active" checked /> Active listing
+              </label>
+            </div>
+            <div class="form-group">
+              <label>
+                <input type="checkbox" id="apt-announce" checked /> Post announcement to community group
+              </label>
+              <p class="form-hint">Requires Telegram webhook URL in Settings</p>
+            </div>
+            <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+              <button type="submit" class="btn btn-primary">Save apartment</button>
+              <button type="button" class="btn btn-secondary" id="form-cancel">Cancel</button>
+            </div>
+          </form>
+        </section>
+
+        <!-- Statistics -->
+        <section class="admin-section" id="section-stats">
+          <h1>Statistics</h1>
+          <div class="stats-bar" style="justify-content: flex-start; margin-bottom: 2rem;">
+            <div class="stat-pill">👁 <strong id="admin-stat-views">0</strong> total views</div>
+            <div class="stat-pill">🔗 <strong id="admin-stat-clicks">0</strong> listing clicks</div>
+            <div class="stat-pill">💬 <strong id="admin-stat-messages">0</strong> landlord messages</div>
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Apartment</th>
+                <th>Views</th>
+                <th>Clicks</th>
+                <th>Messages</th>
+                <th>Conversion</th>
+              </tr>
+            </thead>
+            <tbody id="stats-tbody"></tbody>
+          </table>
+          <button class="btn btn-danger btn-sm" id="reset-stats" style="margin-top: 1.5rem;">Reset all stats</button>
+        </section>
+
+        <!-- Settings -->
+        <section class="admin-section" id="section-settings">
+          <h1>Settings</h1>
+          <form id="settings-form" style="max-width: 640px;">
+            <div class="form-group">
+              <label for="cfg-site-name">Site name</label>
+              <input type="text" id="cfg-site-name" />
+            </div>
+            <div class="form-group">
+              <label for="cfg-tagline">Tagline</label>
+              <input type="text" id="cfg-tagline" />
+            </div>
+            <div class="form-group">
+              <label for="cfg-group-name">Community group name</label>
+              <input type="text" id="cfg-group-name" />
+              <p class="form-hint">Used in landlord contact messages</p>
+            </div>
+            <div class="form-group">
+              <label for="cfg-message-template">Contact message template</label>
+              <textarea id="cfg-message-template" rows="4"></textarea>
+              <p class="form-hint">Variables: {groupName}, {title}, {address}, {price}, {currency}</p>
+            </div>
+            <div class="form-group">
+              <label for="cfg-announcement-template">Announcement template (Telegram)</label>
+              <textarea id="cfg-announcement-template" rows="6"></textarea>
+              <p class="form-hint">Variables: {title}, {address}, {price}, {currency}, {rooms}, {kitchen}, {availableFrom}, {description}, {listingUrl}</p>
+            </div>
+            <div class="form-group">
+              <label for="cfg-telegram">Telegram webhook URL</label>
+              <input type="url" id="cfg-telegram" placeholder="https://your-worker.workers.dev/announce" />
+              <p class="form-hint">Deploy the included Cloudflare Worker (see README) to post to your group</p>
+            </div>
+            <div class="form-group">
+              <label for="cfg-admin-password">Admin password</label>
+              <input type="text" id="cfg-admin-password" />
+            </div>
+            <hr style="border: none; border-top: 1px solid var(--border); margin: 1.5rem 0;" />
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Optional: Supabase for cloud stats sync</p>
+            <div class="form-group">
+              <label for="cfg-supabase-url">Supabase URL</label>
+              <input type="url" id="cfg-supabase-url" placeholder="https://xxx.supabase.co" />
+            </div>
+            <div class="form-group">
+              <label for="cfg-supabase-key">Supabase anon key</label>
+              <input type="text" id="cfg-supabase-key" placeholder="eyJ..." />
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Save settings</button>
+          </form>
+        </section>
+
+        <!-- Export / Import -->
+        <section class="admin-section" id="section-export">
+          <h1>Export / Import</h1>
+          <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
+            Export your data as JSON files to commit to GitHub and keep changes permanent across devices.
+          </p>
+          <div style="display: flex; flex-wrap: gap: 0.5rem; margin-bottom: 2rem;">
+            <button class="btn btn-primary" id="export-apartments">📋 Export apartments.json</button>
+            <button class="btn btn-primary" id="export-config">⚙️ Export config.json</button>
+            <button class="btn btn-primary" id="export-stats">📊 Export stats.json</button>
+          </div>
+          <div class="form-group" style="max-width: 480px;">
+            <label for="import-file">Import apartments from JSON</label>
+            <input type="file" id="import-file" accept=".json" />
+            <p class="form-hint">Replaces current apartment list in browser storage</p>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="/src/admin.js"></script>
+  </body>
+</html>

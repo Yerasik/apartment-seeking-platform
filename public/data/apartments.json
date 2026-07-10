@@ -1,0 +1,42 @@
+[
+  {
+    "id": "apt-001",
+    "title": "Sunny 2BR near City Center",
+    "address": "Example Street 12, Downtown",
+    "price": 850,
+    "currency": "EUR",
+    "rooms": 2,
+    "kitchen": "separate",
+    "bathroom": "shared",
+    "furnished": true,
+    "availableFrom": "2026-08-01",
+    "listingUrl": "https://example.com/listing/123",
+    "landlordContact": "agency@example.com",
+    "contactType": "email",
+    "description": "Bright apartment with balcony, 5 min walk to metro. Looking for 1-2 flatmates.",
+    "imageUrl": "",
+    "tags": ["pet-friendly", "students-welcome"],
+    "active": true,
+    "createdAt": "2026-07-01T10:00:00.000Z"
+  },
+  {
+    "id": "apt-002",
+    "title": "Cozy Studio with Kitchenette",
+    "address": "Park Avenue 45",
+    "price": 550,
+    "currency": "EUR",
+    "rooms": 1,
+    "kitchen": "kitchenette",
+    "bathroom": "private",
+    "furnished": false,
+    "availableFrom": "2026-09-15",
+    "listingUrl": "https://example.com/listing/456",
+    "landlordContact": "+1234567890",
+    "contactType": "phone",
+    "description": "Small but well-located studio. Perfect for one person.",
+    "imageUrl": "",
+    "tags": ["quiet-area"],
+    "active": true,
+    "createdAt": "2026-07-05T14:30:00.000Z"
+  }
+]
