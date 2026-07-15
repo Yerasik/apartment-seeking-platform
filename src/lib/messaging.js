@@ -1,4 +1,5 @@
 import { formatTemplate } from './storage.js';
+import { buildListingShareUrl } from './share.js';
 
 export function buildContactMessage(apartment, config) {
   const template = config.contactMessageTemplate;
@@ -26,16 +27,87 @@ export function buildAnnouncement(apartment, config) {
   return formatTemplate(config.announcementTemplate, announcementData(apartment));
 }
 
-export function buildWhatsAppAnnouncement(apartment, config) {
+function formatKitchen(kitchen) {
+  const labels = {
+    separate: 'Separate kitchen',
+    kitchenette: 'Kitchenette',
+    shared: 'Shared kitchen',
+    none: 'No kitchen',
+  };
+  return labels[kitchen] || kitchen || '';
+}
+
+export const DEFAULT_WHATSAPP_TEMPLATE = `🏠 *New flat available!*
+
+*{title}*
+📍 {address}
+💰 {price} {currency}/month
+🛏 {rooms} room(s) · 🍳 Kitchen: {kitchenLabel}
+📅 Available from: {availableFrom}
+
+{description}
+
+🔗 {shareUrl}`;
+
+function whatsappAnnouncementData(apartment, config = {}) {
+  return {
+    ...announcementData(apartment),
+    groupName: config.groupName || 'Renting Together',
+    kitchenLabel: formatKitchen(apartment.kitchen),
+    availableFrom: apartment.availableFrom || 'Flexible',
+    shareUrl: buildListingShareUrl(apartment, config),
+  };
+}
+
+export function buildWhatsAppAnnouncement(apartment, config = {}) {
   const template =
     config.whatsappAnnouncementTemplate ||
-    config.announcementTemplate?.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$2') ||
-    defaultWhatsAppTemplate();
+    DEFAULT_WHATSAPP_TEMPLATE;
 
-  return formatTemplate(template, {
-    ...announcementData(apartment),
-    groupName: config.groupName,
-  });
+  const text = formatTemplate(template, whatsappAnnouncementData(apartment, config));
+
+  return text
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/\*\*\s*\*/g, '')
+    .trim();
+}
+
+export function hasPreviewImage(apartment) {
+  return Boolean(apartment.imageUrl?.startsWith('http') || apartment.listingUrl?.startsWith('http'));
+}
+
+export async function sendWhatsAppAnnouncement(apartment, config = {}) {
+  const text = buildWhatsAppAnnouncement(apartment, config);
+
+  if (!hasPreviewImage(apartment)) {
+    return {
+      ok: false,
+      error: 'Add a 28Hse or Spacious listing link so the flat photo can appear in WhatsApp.',
+    };
+  }
+
+  if (apartment.imageUrl?.startsWith('data:')) {
+    return {
+      ok: false,
+      error: 'Pasted photos cannot show in WhatsApp previews. Use a listing link to pull the photo automatically.',
+    };
+  }
+
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    return { ok: false, error: 'Could not copy to clipboard.' };
+  }
+
+  return {
+    ok: true,
+    text,
+    message: 'Message copied — paste in WhatsApp after deploying to GitHub Pages for the photo preview.',
+  };
+}
+
+export async function sendCommunityAnnouncement(apartment, config) {
+  return sendWhatsAppAnnouncement(apartment, config);
 }
 
 function announcementData(apartment) {
@@ -52,60 +124,6 @@ function announcementData(apartment) {
     listingUrl: apartment.listingUrl,
     groupName: apartment.groupName,
   };
-}
-
-function defaultWhatsAppTemplate() {
-  return `🏠 *New flat available!*
-
-*{title}*
-📍 {address}
-💰 {price} {currency}/month
-🛏 {rooms} room(s) · 🍳 Kitchen: {kitchen}
-📅 Available from: {availableFrom}
-
-{description}
-
-🔗 {listingUrl}`;
-}
-
-export async function sendWhatsAppAnnouncement(apartment, config) {
-  const text = buildWhatsAppAnnouncement(apartment, config);
-
-  try {
-    await navigator.clipboard.writeText(text);
-  } catch {
-    /* clipboard may be blocked until user gesture — that's fine */
-  }
-
-  const phone = config.whatsappAnnouncePhone?.replace(/\D/g, '');
-  const encoded = encodeURIComponent(text);
-
-  let url;
-  if (phone) {
-    url = `https://wa.me/${phone}?text=${encoded}`;
-  } else {
-    url = `https://wa.me/?text=${encoded}`;
-  }
-
-  window.open(url, '_blank', 'noopener');
-
-  if (config.whatsappGroupLink) {
-    setTimeout(() => {
-      window.open(config.whatsappGroupLink, '_blank', 'noopener');
-    }, 600);
-  }
-
-  return {
-    ok: true,
-    text,
-    message: phone
-      ? 'WhatsApp opened with your announcement ready to send.'
-      : 'WhatsApp opened — select your announcement group and tap Send. Message copied to clipboard.',
-  };
-}
-
-export async function sendCommunityAnnouncement(apartment, config) {
-  return sendWhatsAppAnnouncement(apartment, config);
 }
 
 export async function sendTelegramAnnouncement(apartment, config) {

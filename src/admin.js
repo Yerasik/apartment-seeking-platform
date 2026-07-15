@@ -11,6 +11,8 @@ import { getTotalStats, getApartmentStats, resetStats } from './lib/tracker.js';
 import { sendCommunityAnnouncement } from './lib/messaging.js';
 import { fetchListingPreview } from './lib/linkPreview.js';
 
+const DEFAULT_CURRENCY = 'HKD';
+
 let config = {};
 let apartments = [];
 let editingId = null;
@@ -38,6 +40,7 @@ async function init() {
 
   setupNavigation();
   setupApartmentForm();
+  setupImagePaste();
   setupListingPreview();
   setupSettingsForm();
   setupExport();
@@ -81,7 +84,7 @@ async function renderApartmentsTable() {
           <td>${apt.active !== false ? '✅ Active' : '⏸ Hidden'}</td>
           <td style="white-space: nowrap;">
             <button class="btn btn-secondary btn-sm edit-apt" data-id="${apt.id}">Edit</button>
-            <button class="btn btn-success btn-sm announce-apt" data-id="${apt.id}" title="Post to WhatsApp">💬</button>
+            <button class="btn btn-success btn-sm announce-apt" data-id="${apt.id}" title="Copy share message">📋</button>
             <button class="btn btn-danger btn-sm delete-apt" data-id="${apt.id}">✕</button>
           </td>
         </tr>
@@ -114,7 +117,7 @@ function editApartment(id) {
   document.getElementById('apt-title').value = apt.title;
   document.getElementById('apt-address').value = apt.address;
   document.getElementById('apt-price').value = apt.price;
-  document.getElementById('apt-currency').value = apt.currency || 'EUR';
+  document.getElementById('apt-currency').value = apt.currency || DEFAULT_CURRENCY;
   document.getElementById('apt-rooms').value = apt.rooms || 1;
   document.getElementById('apt-kitchen').value = apt.kitchen || 'separate';
   document.getElementById('apt-bathroom').value = apt.bathroom || 'private';
@@ -134,7 +137,7 @@ function editApartment(id) {
     document.getElementById('image-preview-wrap').hidden = false;
   } else if (apt.listingUrl) {
     document.getElementById('image-preview-wrap').hidden = true;
-    loadPreviewFromLink(false);
+    loadPreviewFromLink({ showErrors: false, overwrite: false });
   } else {
     document.getElementById('image-preview-wrap').hidden = true;
   }
@@ -171,31 +174,113 @@ function switchSection(name) {
   });
 }
 
+function setupImagePaste() {
+  document.addEventListener('paste', (e) => {
+    const addSection = document.getElementById('section-add');
+    if (!addSection?.classList.contains('active')) return;
+
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    for (const item of items) {
+      if (!item.type.startsWith('image/')) continue;
+
+      const file = item.getAsFile();
+      if (!file) continue;
+
+      e.preventDefault();
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = reader.result;
+        document.getElementById('apt-image-url').value = dataUrl;
+        document.getElementById('image-preview').src = dataUrl;
+        document.getElementById('image-preview-wrap').hidden = false;
+        showToast('Image pasted');
+      };
+      reader.readAsDataURL(file);
+      return;
+    }
+  });
+}
+
 function setupListingPreview() {
   const listingInput = document.getElementById('apt-listing-url');
   const imageInput = document.getElementById('apt-image-url');
   const fetchBtn = document.getElementById('fetch-from-link');
   let fetchTimer;
 
-  fetchBtn.addEventListener('click', () => loadPreviewFromLink(true));
+  fetchBtn.addEventListener('click', () => loadPreviewFromLink({ showErrors: true, overwrite: true }));
+
+  listingInput.addEventListener('paste', () => {
+    setTimeout(() => {
+      if (listingInput.value.trim()) {
+        loadPreviewFromLink({ showErrors: false, overwrite: true });
+      }
+    }, 0);
+  });
 
   listingInput.addEventListener('blur', () => {
-    if (!imageInput.value.trim() && listingInput.value.trim()) {
-      loadPreviewFromLink(false);
+    if (listingInput.value.trim()) {
+      loadPreviewFromLink({ showErrors: false, overwrite: false });
     }
   });
 
   listingInput.addEventListener('input', () => {
     clearTimeout(fetchTimer);
-    if (!imageInput.value.trim()) {
-      fetchTimer = setTimeout(() => {
-        if (listingInput.value.trim()) loadPreviewFromLink(false);
-      }, 800);
-    }
+    fetchTimer = setTimeout(() => {
+      if (listingInput.value.trim()) {
+        loadPreviewFromLink({ showErrors: false, overwrite: false });
+      }
+    }, 800);
   });
 }
 
-async function loadPreviewFromLink(showErrors = false) {
+function applyFormFromPreview(preview, { overwrite = false } = {}) {
+  const setValue = (id, value) => {
+    if (value == null || value === '') return;
+    const el = document.getElementById(id);
+    if (!overwrite && el.value.trim()) return;
+    el.value = value;
+  };
+
+  setValue('apt-title', preview.title);
+  setValue('apt-address', preview.address);
+  if (preview.price != null) {
+    const priceEl = document.getElementById('apt-price');
+    if (overwrite || !priceEl.value) priceEl.value = preview.price;
+  }
+  setValue('apt-currency', preview.currency || DEFAULT_CURRENCY);
+  if (preview.rooms != null) {
+    const roomsEl = document.getElementById('apt-rooms');
+    if (overwrite || !roomsEl.value || roomsEl.value === '1') roomsEl.value = preview.rooms;
+  }
+  if (preview.kitchen) {
+    const kitchenEl = document.getElementById('apt-kitchen');
+    if (overwrite || kitchenEl.value === 'separate') kitchenEl.value = preview.kitchen;
+  }
+  if (preview.bathroom) {
+    const bathEl = document.getElementById('apt-bathroom');
+    if (overwrite || bathEl.value === 'private') bathEl.value = preview.bathroom;
+  }
+  if (preview.furnished != null) {
+    const furnEl = document.getElementById('apt-furnished');
+    if (overwrite) furnEl.value = String(preview.furnished);
+  }
+  setValue('apt-description', preview.description?.slice(0, 500));
+  if (preview.tags?.length) {
+    const tagsEl = document.getElementById('apt-tags');
+    if (overwrite || !tagsEl.value.trim()) tagsEl.value = preview.tags.join(', ');
+  }
+
+  if (preview.imageUrl) {
+    document.getElementById('apt-image-url').value = preview.imageUrl;
+    document.getElementById('image-preview').src = preview.imageUrl;
+    document.getElementById('image-preview-wrap').hidden = false;
+  }
+}
+
+async function loadPreviewFromLink({ showErrors = false, overwrite = false } = {}) {
   const listingUrl = document.getElementById('apt-listing-url').value.trim();
   if (!listingUrl) {
     if (showErrors) showToast('Enter a listing URL first', 'error');
@@ -208,27 +293,24 @@ async function loadPreviewFromLink(showErrors = false) {
 
   try {
     const preview = await fetchListingPreview(listingUrl, config);
-    const previewWrap = document.getElementById('image-preview-wrap');
-    const previewImg = document.getElementById('image-preview');
+    applyFormFromPreview(preview, { overwrite });
 
-    if (preview.imageUrl) {
-      document.getElementById('apt-image-url').value = preview.imageUrl;
-      previewImg.src = preview.imageUrl;
-      previewWrap.hidden = false;
+    const filledFields = [
+      preview.title,
+      preview.address,
+      preview.price,
+      preview.imageUrl,
+    ].filter(Boolean).length;
 
-      if (!document.getElementById('apt-title').value.trim() && preview.title) {
-        document.getElementById('apt-title').value = preview.title;
-      }
-      if (!document.getElementById('apt-description').value.trim() && preview.description) {
-        document.getElementById('apt-description').value = preview.description.slice(0, 500);
-      }
-
-      showToast('Image loaded from listing link');
-    } else {
-      previewWrap.hidden = true;
-      if (showErrors) {
-        showToast('No image found on that page — add an image URL manually', 'error');
-      }
+    if (filledFields > 0) {
+      showToast(
+        preview.source === '28hse' || preview.source === 'spacious'
+          ? 'Listing details loaded'
+          : 'Preview loaded from link'
+      );
+    } else if (showErrors) {
+      document.getElementById('image-preview-wrap').hidden = true;
+      showToast('Could not extract listing details — fill in manually', 'error');
     }
   } catch (err) {
     if (showErrors) {
@@ -266,7 +348,7 @@ function setupApartmentForm() {
       title: document.getElementById('apt-title').value.trim(),
       address: document.getElementById('apt-address').value.trim(),
       price: Number(document.getElementById('apt-price').value),
-      currency: document.getElementById('apt-currency').value.trim() || 'EUR',
+      currency: document.getElementById('apt-currency').value.trim() || DEFAULT_CURRENCY,
       rooms: Number(document.getElementById('apt-rooms').value) || 1,
       kitchen: document.getElementById('apt-kitchen').value,
       bathroom: document.getElementById('apt-bathroom').value,
@@ -317,7 +399,7 @@ function resetForm() {
   editingId = null;
   document.getElementById('form-title').textContent = 'Add apartment';
   document.getElementById('apartment-form').reset();
-  document.getElementById('apt-currency').value = 'EUR';
+  document.getElementById('apt-currency').value = DEFAULT_CURRENCY;
   document.getElementById('apt-rooms').value = 1;
   document.getElementById('apt-active').checked = true;
   document.getElementById('apt-announce').checked = true;
@@ -361,13 +443,12 @@ async function renderStats() {
 }
 
 function populateSettingsForm() {
+  document.getElementById('cfg-site-url').value = config.siteUrl || '';
   document.getElementById('cfg-site-name').value = config.siteName || '';
   document.getElementById('cfg-tagline').value = config.tagline || '';
   document.getElementById('cfg-group-name').value = config.groupName || '';
   document.getElementById('cfg-message-template').value = config.contactMessageTemplate || '';
   document.getElementById('cfg-whatsapp-template').value = config.whatsappAnnouncementTemplate || '';
-  document.getElementById('cfg-whatsapp-phone').value = config.whatsappAnnouncePhone || '';
-  document.getElementById('cfg-whatsapp-group').value = config.whatsappGroupLink || '';
   document.getElementById('cfg-announcement-template').value = config.announcementTemplate || '';
   document.getElementById('cfg-telegram').value = config.telegramWebhookUrl || '';
   document.getElementById('cfg-admin-password').value = config.adminPassword || '';
@@ -381,13 +462,12 @@ function setupSettingsForm() {
 
     config = {
       ...config,
+      siteUrl: document.getElementById('cfg-site-url').value.trim().replace(/\/$/, ''),
       siteName: document.getElementById('cfg-site-name').value.trim(),
       tagline: document.getElementById('cfg-tagline').value.trim(),
       groupName: document.getElementById('cfg-group-name').value.trim(),
       contactMessageTemplate: document.getElementById('cfg-message-template').value,
       whatsappAnnouncementTemplate: document.getElementById('cfg-whatsapp-template').value,
-      whatsappAnnouncePhone: document.getElementById('cfg-whatsapp-phone').value.trim(),
-      whatsappGroupLink: document.getElementById('cfg-whatsapp-group').value.trim(),
       announcementTemplate: document.getElementById('cfg-announcement-template').value,
       telegramWebhookUrl: document.getElementById('cfg-telegram').value.trim(),
       adminPassword: document.getElementById('cfg-admin-password').value.trim(),

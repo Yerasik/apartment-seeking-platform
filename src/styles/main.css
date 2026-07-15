@@ -23,6 +23,10 @@
   padding: 0;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 html {
   scroll-behavior: smooth;
 }
@@ -173,6 +177,11 @@ a:hover {
   transform: translateY(-3px);
   box-shadow: var(--shadow);
   border-color: var(--accent);
+}
+
+.apartment-card.card-highlight {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(26, 95, 74, 0.25);
 }
 
 .card-image {

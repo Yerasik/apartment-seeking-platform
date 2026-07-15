@@ -19,7 +19,7 @@
           </div>
           <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">Sign in</button>
         </form>
-        <p class="form-hint" style="margin-top: 1rem;">Default password: <code>renting-together</code></p>
+        <p class="form-hint" style="margin-top: 1rem;">Password is in <code>public/data/config.json</code> → <code>adminPassword</code></p>
         <a href="index.html" style="display: block; margin-top: 1rem; font-size: 0.85rem;">← Back to listings</a>
       </div>
     </div>
@@ -81,7 +81,7 @@
               </div>
               <div class="form-group">
                 <label for="apt-currency">Currency</label>
-                <input type="text" id="apt-currency" value="EUR" placeholder="EUR" />
+                <input type="text" id="apt-currency" value="HKD" placeholder="HKD" />
               </div>
             </div>
             <div class="form-row">
@@ -125,15 +125,15 @@
                 <input type="url" id="apt-listing-url" placeholder="https://..." />
                 <button type="button" class="btn btn-secondary btn-sm" id="fetch-from-link">Fetch preview</button>
               </div>
-              <p class="form-hint">Paste the original posting link — the image is pulled automatically (like WhatsApp link previews).</p>
+              <p class="form-hint">Paste a 28Hse or Spacious link to auto-fill the form (price, address, photo, etc.).</p>
             </div>
             <div class="form-group">
-              <label for="apt-image-url">Image URL <span class="label-optional">(manual override)</span></label>
-              <input type="url" id="apt-image-url" placeholder="Only needed if there is no listing link" />
-              <p class="form-hint">Leave empty to use the image from the listing page. Fill in only if auto-fetch fails or there is no link.</p>
+              <label for="apt-image-url">Image <span class="label-optional">(URL or paste)</span></label>
+              <input type="text" id="apt-image-url" placeholder="Paste image with Ctrl+V, or enter a URL" />
+              <p class="form-hint">Press Ctrl+V (Cmd+V on Mac) anywhere on this form to paste a photo. Or leave empty to use the image from the listing page.</p>
             </div>
             <div class="image-preview-wrap" id="image-preview-wrap" hidden>
-              <p class="form-hint">Preview from listing:</p>
+              <p class="form-hint">Image preview:</p>
               <div class="image-preview-box">
                 <img id="image-preview" alt="Listing preview" />
               </div>
@@ -168,9 +168,9 @@
             </div>
             <div class="form-group">
               <label>
-                <input type="checkbox" id="apt-announce" checked /> Post announcement to WhatsApp group
+                <input type="checkbox" id="apt-announce" checked /> Copy share message when saving
               </label>
-              <p class="form-hint">Opens WhatsApp with a pre-filled message for your announcement group</p>
+              <p class="form-hint">Copies a message with your site link. For the flat photo in WhatsApp: paste a 28Hse/Spacious link (auto-fetches photo), then export & deploy to GitHub Pages.</p>
             </div>
             <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
               <button type="submit" class="btn btn-primary">Save apartment</button>
@@ -207,6 +207,11 @@
           <h1>Settings</h1>
           <form id="settings-form" style="max-width: 640px;">
             <div class="form-group">
+              <label for="cfg-site-url">Public site URL</label>
+              <input type="url" id="cfg-site-url" placeholder="https://yerasik.github.io/apartment-seeking-platform" />
+              <p class="form-hint">Used for WhatsApp share links and listing previews. No trailing slash.</p>
+            </div>
+            <div class="form-group">
               <label for="cfg-site-name">Site name</label>
               <input type="text" id="cfg-site-name" />
             </div>
@@ -225,21 +230,11 @@
               <p class="form-hint">Variables: {groupName}, {title}, {address}, {price}, {currency}</p>
             </div>
             <hr style="border: none; border-top: 1px solid var(--border); margin: 1.5rem 0;" />
-            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">WhatsApp announcements</p>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">WhatsApp share message</p>
             <div class="form-group">
               <label for="cfg-whatsapp-template">WhatsApp announcement template</label>
-              <textarea id="cfg-whatsapp-template" rows="8"></textarea>
-              <p class="form-hint">Variables: {title}, {address}, {price}, {currency}, {rooms}, {kitchen}, {availableFrom}, {description}, {listingUrl}. Use *text* for bold in WhatsApp.</p>
-            </div>
-            <div class="form-group">
-              <label for="cfg-whatsapp-phone">Announcement phone number (optional)</label>
-              <input type="text" id="cfg-whatsapp-phone" placeholder="e.g. 85212345678 (country code, no +)" />
-              <p class="form-hint">If set, opens a chat to this number with the message pre-filled. Leave empty to pick your group manually.</p>
-            </div>
-            <div class="form-group">
-              <label for="cfg-whatsapp-group">WhatsApp group invite link (optional)</label>
-              <input type="url" id="cfg-whatsapp-group" placeholder="https://chat.whatsapp.com/..." />
-              <p class="form-hint">Also opens your announcement group so you can paste the message (copied automatically).</p>
+              <textarea id="cfg-whatsapp-template" rows="10"></textarea>
+              <p class="form-hint">Variables: {title}, {address}, {price}, {currency}, {rooms}, {kitchenLabel}, {availableFrom}, {description}, {shareUrl}. Use *text* for bold. {shareUrl} triggers the image preview.</p>
             </div>
             <hr style="border: none; border-top: 1px solid var(--border); margin: 1.5rem 0;" />
             <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Optional: Telegram (auto-post via webhook)</p>
@@ -276,6 +271,7 @@
           <h1>Export / Import</h1>
           <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
             Export your data as JSON files to commit to GitHub and keep changes permanent across devices.
+            After exporting, replace <code>public/data/apartments.json</code> and push to GitHub so share links work in WhatsApp.
           </p>
           <div style="display: flex; flex-wrap: gap: 0.5rem; margin-bottom: 2rem;">
             <button class="btn btn-primary" id="export-apartments">📋 Export apartments.json</button>

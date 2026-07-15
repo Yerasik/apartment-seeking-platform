@@ -18,7 +18,9 @@ async function init() {
   [config, apartments] = await Promise.all([loadConfig(), loadApartments()]);
   applyBranding();
   renderListingCount();
-  renderApartments();
+  await renderApartments();
+  scrollToListingFromHash();
+  window.addEventListener('hashchange', scrollToListingFromHash);
   setupModal();
 }
 
@@ -88,8 +90,12 @@ async function renderApartments() {
             ${apt.description ? `<p class="card-description">${escapeHtml(apt.description)}</p>` : ''}
             ${apt.tags?.length ? `<div class="card-tags">${apt.tags.map((t) => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
             <div class="card-actions">
-              ${apt.listingUrl ? `<button class="btn btn-primary btn-sm view-listing" data-id="${apt.id}" data-url="${escapeHtml(apt.listingUrl)}">🔗 View listing</button>` : ''}
-              <button class="btn btn-success btn-sm contact-landlord" data-id="${apt.id}">${getContactLabel(apt.contactType)}</button>
+              ${
+                apt.contactType === 'phone' && apt.landlordContact
+                  ? `<button class="btn btn-success btn-sm contact-landlord" data-id="${apt.id}">💬 WhatsApp landlord</button>`
+                  : `<button class="btn btn-success btn-sm contact-landlord" data-id="${apt.id}">${getContactLabel(apt.contactType)}</button>`
+              }
+              ${apt.listingUrl ? `<button class="btn btn-secondary btn-sm view-listing" data-id="${apt.id}" data-url="${escapeHtml(apt.listingUrl)}">🔗 View original listing</button>` : ''}
             </div>
           </div>
         </article>
@@ -99,6 +105,18 @@ async function renderApartments() {
 
   grid.innerHTML = cards.join('');
   bindCardEvents();
+}
+
+function scrollToListingFromHash() {
+  const id = location.hash.replace('#', '');
+  if (!id) return;
+
+  const card = document.querySelector(`.apartment-card[data-id="${id}"]`);
+  if (!card) return;
+
+  card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  card.classList.add('card-highlight');
+  setTimeout(() => card.classList.remove('card-highlight'), 2500);
 }
 
 function bindCardEvents() {
@@ -112,9 +130,18 @@ function bindCardEvents() {
   });
 
   document.querySelectorAll('.contact-landlord').forEach((btn) => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       const apt = apartments.find((a) => a.id === btn.dataset.id);
-      if (apt) openContactModal(apt);
+      if (!apt) return;
+
+      if (apt.contactType === 'phone' && apt.landlordContact) {
+        const message = buildContactMessage(apt, config);
+        await trackEvent('message', apt.id, config);
+        openContactChannel(apt, message);
+        return;
+      }
+
+      openContactModal(apt);
     });
   });
 }

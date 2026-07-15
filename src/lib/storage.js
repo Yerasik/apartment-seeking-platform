@@ -85,10 +85,9 @@ export function getDefaultConfig() {
     contactMessageTemplate:
       "Hello! I'm from the {groupName} community group. I'm interested in renting this apartment and would like to ask about the possibility of viewing it and discussing the terms. Could you please share more details? Thank you!",
     adminPassword: 'renting-together',
-    whatsappAnnouncePhone: '',
-    whatsappGroupLink: '',
+    siteUrl: 'https://yerasik.github.io/apartment-seeking-platform',
     whatsappAnnouncementTemplate:
-      '🏠 *New flat available!*\n\n*{title}*\n📍 {address}\n💰 {price} {currency}/month\n🛏 {rooms} room(s) · 🍳 Kitchen: {kitchen}\n📅 Available from: {availableFrom}\n\n{description}\n\n🔗 {listingUrl}',
+      '🏠 *New flat available!*\n\n*{title}*\n📍 {address}\n💰 {price} {currency}/month\n🛏 {rooms} room(s) · 🍳 Kitchen: {kitchenLabel}\n📅 Available from: {availableFrom}\n\n{description}\n\n🔗 {shareUrl}',
     telegramWebhookUrl: '',
     supabaseUrl: '',
     supabaseAnonKey: '',
