@@ -7,6 +7,7 @@ import {
   downloadJson,
   showToast,
 } from './lib/storage.js';
+import { DEPLOY_SHARE_HINT } from './lib/share.js';
 import { getTotalStats, getApartmentStats, resetStats } from './lib/tracker.js';
 import { sendCommunityAnnouncement } from './lib/messaging.js';
 import { fetchListingPreview } from './lib/linkPreview.js';
@@ -159,7 +160,7 @@ async function announceApartment(id) {
 
   const result = await sendCommunityAnnouncement(apt, config);
   if (result.ok) {
-    showToast(result.message);
+    showToast(result.message, result.warning ? 'error' : 'success');
   } else {
     showToast(result.error, 'error');
   }
@@ -379,11 +380,20 @@ function setupApartmentForm() {
 
     const shouldAnnounce = document.getElementById('apt-announce').checked;
     if (shouldAnnounce) {
+      downloadJson('apartments.json', apartments);
       const result = await sendCommunityAnnouncement(apt, config);
       if (result.ok) {
-        showToast(`Apartment saved! ${result.message}`);
+        showToast(
+          result.warning
+            ? `${result.message}`
+            : `Apartment saved! ${result.message}`,
+          result.warning ? 'error' : 'success'
+        );
+        if (result.warning) {
+          setTimeout(() => showToast(DEPLOY_SHARE_HINT, 'error'), 4000);
+        }
       } else {
-        showToast(`Saved, but announcement failed: ${result.error}`, 'error');
+        showToast(`Saved + apartments.json downloaded, but copy failed: ${result.error}`, 'error');
       }
     } else {
       showToast('Apartment saved!');
@@ -483,7 +493,8 @@ function setupSettingsForm() {
 function setupExport() {
   document.getElementById('export-apartments').addEventListener('click', () => {
     downloadJson('apartments.json', apartments);
-    showToast('apartments.json downloaded — commit it to your repo!');
+    showToast('apartments.json downloaded — replace public/data/apartments.json and push to GitHub!');
+    setTimeout(() => showToast(DEPLOY_SHARE_HINT, 'success'), 3500);
   });
 
   document.getElementById('export-config').addEventListener('click', () => {

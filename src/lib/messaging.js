@@ -1,5 +1,5 @@
 import { formatTemplate } from './storage.js';
-import { buildListingShareUrl } from './share.js';
+import { buildListingShareUrl, checkSharePageLive, DEPLOY_SHARE_HINT } from './share.js';
 
 export function buildContactMessage(apartment, config) {
   const template = config.contactMessageTemplate;
@@ -78,6 +78,7 @@ export function hasPreviewImage(apartment) {
 
 export async function sendWhatsAppAnnouncement(apartment, config = {}) {
   const text = buildWhatsAppAnnouncement(apartment, config);
+  const shareUrl = buildListingShareUrl(apartment, config);
 
   if (!hasPreviewImage(apartment)) {
     return {
@@ -99,10 +100,23 @@ export async function sendWhatsAppAnnouncement(apartment, config = {}) {
     return { ok: false, error: 'Could not copy to clipboard.' };
   }
 
+  const isLive = await checkSharePageLive(shareUrl);
+
+  if (isLive === false) {
+    return {
+      ok: true,
+      text,
+      message: `Copied, but link is NOT LIVE yet (404). ${DEPLOY_SHARE_HINT}`,
+      warning: true,
+    };
+  }
+
   return {
     ok: true,
     text,
-    message: 'Message copied — paste in WhatsApp after deploying to GitHub Pages for the photo preview.',
+    message: isLive
+      ? 'Message copied — paste in WhatsApp. Photo preview should appear.'
+      : `Message copied. ${DEPLOY_SHARE_HINT}`,
   };
 }
 

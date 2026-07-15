@@ -13,3 +13,15 @@ export function getSiteUrl(config = {}) {
 export function buildListingShareUrl(apartment, config = {}) {
   return `${getSiteUrl(config)}/listings/${apartment.id}.html`;
 }
+
+export async function checkSharePageLive(shareUrl) {
+  try {
+    const res = await fetch(shareUrl, { method: 'HEAD', cache: 'no-store' });
+    return res.ok;
+  } catch {
+    return null;
+  }
+}
+
+export const DEPLOY_SHARE_HINT =
+  'Export apartments.json → replace public/data/apartments.json → push to GitHub → wait ~2 min for deploy.';

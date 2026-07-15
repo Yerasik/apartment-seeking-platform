@@ -168,12 +168,6 @@ function setupModal() {
     }
   });
 
-  document.getElementById('copy-message').addEventListener('click', async () => {
-    const text = document.getElementById('message-preview').textContent;
-    await navigator.clipboard.writeText(text);
-    showCopyFeedback('Message copied!');
-  });
-
   document.getElementById('send-message').addEventListener('click', async () => {
     if (!currentApartment) return;
     const message = buildContactMessage(currentApartment, config);
