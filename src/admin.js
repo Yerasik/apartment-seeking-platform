@@ -73,7 +73,7 @@ async function renderApartmentsTable() {
   const tbody = document.getElementById('apartments-tbody');
   const rows = await Promise.all(
     apartments.map(async (apt) => {
-      const stats = await getApartmentStats(apt.id);
+      const stats = await getApartmentStats(apt.id, config);
       return `
         <tr>
           <td>${escapeHtml(apt.title)}</td>
@@ -418,16 +418,24 @@ function resetForm() {
 }
 
 async function renderStats() {
-  const totals = await getTotalStats();
+  const totals = await getTotalStats(config);
 
   document.getElementById('admin-stat-views').textContent = totals.totalViews;
   document.getElementById('admin-stat-clicks').textContent = totals.totalClicks;
   document.getElementById('admin-stat-messages').textContent = totals.totalMessages;
 
+  const sourceEl = document.getElementById('stats-source');
+  if (sourceEl) {
+    sourceEl.textContent =
+      totals.source === 'supabase'
+        ? 'Showing stats from all visitors (Supabase).'
+        : 'Showing stats from this browser only. Add Supabase in Settings to track everyone.';
+  }
+
   const tbody = document.getElementById('stats-tbody');
   const rows = await Promise.all(
     apartments.map(async (apt) => {
-      const s = await getApartmentStats(apt.id);
+      const s = await getApartmentStats(apt.id, config);
       const conversion = s.views > 0 ? `${Math.round((s.messages / s.views) * 100)}%` : '—';
       return `
         <tr>
@@ -444,11 +452,10 @@ async function renderStats() {
   tbody.innerHTML = rows.join('') || '<tr><td colspan="5" style="text-align:center;color:var(--text-muted)">No data yet</td></tr>';
 
   document.getElementById('reset-stats').onclick = () => {
-    if (confirm('Reset all statistics? This cannot be undone.')) {
-      resetStats();
-      renderStats();
-      showToast('Stats reset');
-    }
+    if (!confirm('Reset local browser stats? Cloud stats in Supabase are kept.')) return;
+    resetStats();
+    renderStats();
+    showToast('Local stats reset');
   };
 }
 
@@ -503,7 +510,7 @@ function setupExport() {
   });
 
   document.getElementById('export-stats').addEventListener('click', async () => {
-    const stats = await getTotalStats();
+    const stats = await getTotalStats(config);
     downloadJson('stats.json', stats.perApartment);
     showToast('stats.json downloaded');
   });

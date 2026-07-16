@@ -182,6 +182,7 @@
         <!-- Statistics -->
         <section class="admin-section" id="section-stats">
           <h1>Statistics</h1>
+          <p id="stats-source" class="form-hint" style="margin-bottom: 1rem;"></p>
           <div class="stats-bar" style="justify-content: flex-start; margin-bottom: 2rem;">
             <div class="stat-pill">👁 <strong id="admin-stat-views">0</strong> total views</div>
             <div class="stat-pill">🔗 <strong id="admin-stat-clicks">0</strong> listing clicks</div>
@@ -199,7 +200,7 @@
             </thead>
             <tbody id="stats-tbody"></tbody>
           </table>
-          <button class="btn btn-danger btn-sm" id="reset-stats" style="margin-top: 1.5rem;">Reset all stats</button>
+          <button class="btn btn-danger btn-sm" id="reset-stats" style="margin-top: 1.5rem;">Reset local stats</button>
         </section>
 
         <!-- Settings -->
@@ -253,14 +254,16 @@
               <input type="text" id="cfg-admin-password" />
             </div>
             <hr style="border: none; border-top: 1px solid var(--border); margin: 1.5rem 0;" />
-            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Optional: Supabase for cloud stats sync</p>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Cloud stats (tracks all visitors)</p>
             <div class="form-group">
-              <label for="cfg-supabase-url">Supabase URL</label>
-              <input type="url" id="cfg-supabase-url" placeholder="https://xxx.supabase.co" />
+              <label for="cfg-supabase-url">Supabase Project URL</label>
+              <input type="url" id="cfg-supabase-url" placeholder="https://abcdefghijklmnop.supabase.co" />
+              <p class="form-hint">In Supabase: open your project → click <strong>Connect</strong> (top) → <strong>API Keys</strong> tab → copy <strong>Project URL</strong>. Or: Project Settings (gear, bottom-left) → <strong>Data API</strong>.</p>
             </div>
             <div class="form-group">
-              <label for="cfg-supabase-key">Supabase anon key</label>
-              <input type="text" id="cfg-supabase-key" placeholder="eyJ..." />
+              <label for="cfg-supabase-key">Supabase anon / publishable key</label>
+              <input type="text" id="cfg-supabase-key" placeholder="eyJhbGciOiJIUzI1NiIs..." />
+              <p class="form-hint">Same place: copy the <strong>anon</strong> or <strong>publishable</strong> key (not the service_role secret). Run <code>scripts/supabase-setup.sql</code> in Supabase SQL Editor first, then save & export config.json to GitHub.</p>
             </div>
             <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Save settings</button>
           </form>

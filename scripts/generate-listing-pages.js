@@ -96,6 +96,44 @@ async function resolveFlatImage(apt) {
   return '';
 }
 
+function buildTrackingScript(aptId, config) {
+  if (!config.supabaseUrl?.trim() || !config.supabaseAnonKey?.trim()) {
+    return '';
+  }
+
+  const url = JSON.stringify(config.supabaseUrl);
+  const key = JSON.stringify(config.supabaseAnonKey);
+  const id = JSON.stringify(aptId);
+
+  return `<script>
+(function () {
+  var cfg = { url: ${url}, key: ${key}, id: ${id} };
+  function track(type) {
+    fetch(cfg.url + '/rest/v1/events', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: cfg.key,
+        Authorization: 'Bearer ' + cfg.key,
+        Prefer: 'return=minimal',
+      },
+      body: JSON.stringify({
+        event_type: type,
+        apartment_id: cfg.id,
+        metadata: { page: 'share' },
+        created_at: new Date().toISOString(),
+      }),
+    }).catch(function () {});
+  }
+  track('view');
+  var listing = document.querySelector('.btn-listing');
+  if (listing) listing.addEventListener('click', function () { track('click'); });
+  var wa = document.querySelector('.btn-wa');
+  if (wa) wa.addEventListener('click', function () { track('message'); });
+})();
+</script>`;
+}
+
 function kitchenLabel(kitchen) {
   const labels = {
     separate: 'Separate kitchen',
@@ -244,6 +282,7 @@ for (const apt of apartments) {
       </div>
       <p class="footer">Part of the ${escapeHtml(config.groupName || 'Renting Together')} community</p>
     </div>
+    ${buildTrackingScript(apt.id, config)}
   </body>
 </html>
 `;

@@ -7,7 +7,7 @@
   "siteUrl": "https://yerasik.github.io/apartment-seeking-platform",
   "whatsappAnnouncementTemplate": "🏠 *New flat available!*\n\n*{title}*\n📍 {address}\n💰 {price} {currency}/month\n🛏 {rooms} room(s) · 🍳 Kitchen: {kitchenLabel}\n📅 Available from: {availableFrom}\n\n{description}\n\n🔗 {shareUrl}",
   "telegramWebhookUrl": "",
-  "supabaseUrl": "",
-  "supabaseAnonKey": "",
+  "supabaseUrl": "https://vqvmlmgktwgsiperpdwu.supabase.co",
+  "supabaseAnonKey": "sb_publishable_O7KbJ8-BWxZ3ohq8adxyCA_RZQw_6td",
   "announcementTemplate": "🏠 *New flat available!*\n\n*{title}*\n📍 {address}\n💰 {price} {currency}/month\n🛏 {rooms} room(s) · 🍳 Kitchen: {kitchen}\n📅 Available from: {availableFrom}\n\n{description}\n\n🔗 [View listing]({listingUrl})"
 }
