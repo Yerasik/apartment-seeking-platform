@@ -24,4 +24,4 @@ export async function checkSharePageLive(shareUrl) {
 }
 
 export const DEPLOY_SHARE_HINT =
-  'Export apartments.json → replace public/data/apartments.json → push to GitHub → wait ~2 min for deploy.';
+  'Copy apartments.json → paste into public/data/apartments.json on GitHub → wait ~2 min for deploy.';

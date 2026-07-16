@@ -4,7 +4,7 @@ import {
   saveApartments,
   saveConfig,
   generateId,
-  downloadJson,
+  copyJsonToClipboard,
   showToast,
 } from './lib/storage.js';
 import { DEPLOY_SHARE_HINT } from './lib/share.js';
@@ -380,7 +380,6 @@ function setupApartmentForm() {
 
     const shouldAnnounce = document.getElementById('apt-announce').checked;
     if (shouldAnnounce) {
-      downloadJson('apartments.json', apartments);
       const result = await sendCommunityAnnouncement(apt, config);
       if (result.ok) {
         showToast(
@@ -393,7 +392,7 @@ function setupApartmentForm() {
           setTimeout(() => showToast(DEPLOY_SHARE_HINT, 'error'), 4000);
         }
       } else {
-        showToast(`Saved + apartments.json downloaded, but copy failed: ${result.error}`, 'error');
+        showToast(`Saved, but copy failed: ${result.error}`, 'error');
       }
     } else {
       showToast('Apartment saved!');
@@ -498,21 +497,33 @@ function setupSettingsForm() {
 }
 
 function setupExport() {
-  document.getElementById('export-apartments').addEventListener('click', () => {
-    downloadJson('apartments.json', apartments);
-    showToast('apartments.json downloaded — replace public/data/apartments.json and push to GitHub!');
-    setTimeout(() => showToast(DEPLOY_SHARE_HINT, 'success'), 3500);
+  document.getElementById('export-apartments').addEventListener('click', async () => {
+    try {
+      await copyJsonToClipboard(apartments);
+      showToast('apartments.json copied — paste into public/data/apartments.json on GitHub');
+      setTimeout(() => showToast(DEPLOY_SHARE_HINT, 'success'), 3500);
+    } catch {
+      showToast('Could not copy to clipboard', 'error');
+    }
   });
 
-  document.getElementById('export-config').addEventListener('click', () => {
-    downloadJson('config.json', config);
-    showToast('config.json downloaded');
+  document.getElementById('export-config').addEventListener('click', async () => {
+    try {
+      await copyJsonToClipboard(config);
+      showToast('config.json copied to clipboard');
+    } catch {
+      showToast('Could not copy to clipboard', 'error');
+    }
   });
 
   document.getElementById('export-stats').addEventListener('click', async () => {
-    const stats = await getTotalStats(config);
-    downloadJson('stats.json', stats.perApartment);
-    showToast('stats.json downloaded');
+    try {
+      const stats = await getTotalStats(config);
+      await copyJsonToClipboard(stats.perApartment);
+      showToast('stats.json copied to clipboard');
+    } catch {
+      showToast('Could not copy to clipboard', 'error');
+    }
   });
 
   document.getElementById('import-file').addEventListener('change', async (e) => {

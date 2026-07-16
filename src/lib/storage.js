@@ -104,14 +104,10 @@ export function formatTemplate(template, data) {
   return template.replace(/\{(\w+)\}/g, (_, key) => data[key] ?? '');
 }
 
-export function downloadJson(filename, data) {
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
+export async function copyJsonToClipboard(data) {
+  const text = JSON.stringify(data, null, 2);
+  await navigator.clipboard.writeText(text);
+  return text;
 }
 
 export function showToast(message, type = 'success') {

@@ -33,7 +33,7 @@
           <li><button data-section="add">➕ Add apartment</button></li>
           <li><button data-section="stats">📊 Statistics</button></li>
           <li><button data-section="settings">⚙️ Settings</button></li>
-          <li><button data-section="export">💾 Export / Import</button></li>
+          <li><button data-section="export">📋 Copy / Import</button></li>
         </ul>
         <div style="margin-top: 2rem; padding: 0 0.5rem;">
           <a href="index.html" style="font-size: 0.85rem; color: var(--text-muted);">← View site</a>
@@ -170,7 +170,7 @@
               <label>
                 <input type="checkbox" id="apt-announce" checked /> Copy share message when saving
               </label>
-              <p class="form-hint">Copies a message with your site link. For the flat photo in WhatsApp: paste a 28Hse/Spacious link (auto-fetches photo), then export & deploy to GitHub Pages.</p>
+              <p class="form-hint">Copies a message with your site link. For the flat photo in WhatsApp: paste a 28Hse/Spacious link (auto-fetches photo), then copy apartments.json and update GitHub.</p>
             </div>
             <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
               <button type="submit" class="btn btn-primary">Save apartment</button>
@@ -263,23 +263,23 @@
             <div class="form-group">
               <label for="cfg-supabase-key">Supabase anon / publishable key</label>
               <input type="text" id="cfg-supabase-key" placeholder="eyJhbGciOiJIUzI1NiIs..." />
-              <p class="form-hint">Same place: copy the <strong>anon</strong> or <strong>publishable</strong> key (not the service_role secret). Run <code>scripts/supabase-setup.sql</code> in Supabase SQL Editor first, then save & export config.json to GitHub.</p>
+              <p class="form-hint">Same place: copy the <strong>anon</strong> or <strong>publishable</strong> key (not the service_role secret). Run <code>scripts/supabase-setup.sql</code> in Supabase SQL Editor first, then save & copy config.json to GitHub.</p>
             </div>
             <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Save settings</button>
           </form>
         </section>
 
-        <!-- Export / Import -->
+        <!-- Copy / Import -->
         <section class="admin-section" id="section-export">
-          <h1>Export / Import</h1>
+          <h1>Copy / Import</h1>
           <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
-            Export your data as JSON files to commit to GitHub and keep changes permanent across devices.
-            After exporting, replace <code>public/data/apartments.json</code> and push to GitHub so share links work in WhatsApp.
+            Copy JSON to your clipboard — nothing is saved on your computer. Paste into
+            <code>public/data/</code> on GitHub to update the live site.
           </p>
           <div style="display: flex; flex-wrap: gap: 0.5rem; margin-bottom: 2rem;">
-            <button class="btn btn-primary" id="export-apartments">📋 Export apartments.json</button>
-            <button class="btn btn-primary" id="export-config">⚙️ Export config.json</button>
-            <button class="btn btn-primary" id="export-stats">📊 Export stats.json</button>
+            <button class="btn btn-primary" id="export-apartments">📋 Copy apartments.json</button>
+            <button class="btn btn-primary" id="export-config">⚙️ Copy config.json</button>
+            <button class="btn btn-primary" id="export-stats">📊 Copy stats.json</button>
           </div>
           <div class="form-group" style="max-width: 480px;">
             <label for="import-file">Import apartments from JSON</label>
