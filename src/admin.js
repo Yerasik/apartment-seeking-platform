@@ -418,43 +418,117 @@ function resetForm() {
 
 async function renderStats() {
   const totals = await getTotalStats(config);
+  const activeCount = apartments.filter((a) => a.active !== false).length;
 
   document.getElementById('admin-stat-views').textContent = totals.totalViews;
   document.getElementById('admin-stat-clicks').textContent = totals.totalClicks;
   document.getElementById('admin-stat-messages').textContent = totals.totalMessages;
+  document.getElementById('dash-active-listings').textContent = activeCount;
+
+  const clickRate =
+    totals.totalViews > 0 ? `${Math.round((totals.totalClicks / totals.totalViews) * 100)}%` : '—';
+  const messageRate =
+    totals.totalViews > 0 ? `${Math.round((totals.totalMessages / totals.totalViews) * 100)}%` : '—';
+  document.getElementById('dash-click-rate').textContent = clickRate;
+  document.getElementById('dash-message-rate').textContent = messageRate;
 
   const sourceEl = document.getElementById('stats-source');
   if (sourceEl) {
     sourceEl.textContent =
       totals.source === 'supabase'
-        ? 'Showing stats from all visitors (Supabase).'
-        : 'Showing stats from this browser only. Add Supabase in Settings to track everyone.';
+        ? 'Stats from all visitors (Supabase).'
+        : 'Stats from this browser only — add Supabase in Settings to track everyone.';
+  }
+
+  const rows = apartments.map((apt) => {
+    const views = totals.perApartment.views?.[apt.id] || 0;
+    const clicks = totals.perApartment.clicks?.[apt.id] || 0;
+    const messages = totals.perApartment.messages?.[apt.id] || 0;
+    const aptClickRate = views > 0 ? `${Math.round((clicks / views) * 100)}%` : '—';
+    const aptMessageRate = views > 0 ? `${Math.round((messages / views) * 100)}%` : '—';
+
+    return {
+      apt,
+      views,
+      clicks,
+      messages,
+      aptClickRate,
+      aptMessageRate,
+      score: views + clicks * 2 + messages * 3,
+    };
+  });
+
+  const sortedByViews = [...rows].sort((a, b) => b.views - a.views);
+  const sortedByScore = [...rows].sort((a, b) => b.score - a.score);
+  const maxViews = Math.max(1, ...rows.map((r) => r.views));
+
+  const barsEl = document.getElementById('dash-bars-views');
+  if (barsEl) {
+    barsEl.innerHTML =
+      sortedByViews
+        .filter((r) => r.views > 0)
+        .slice(0, 8)
+        .map(
+          (r) => `
+        <div class="dash-bar-row">
+          <span class="dash-bar-label" title="${escapeHtml(r.apt.title)}">${escapeHtml(r.apt.title)}</span>
+          <div class="dash-bar-track">
+            <div class="dash-bar-fill" style="width: ${Math.round((r.views / maxViews) * 100)}%"></div>
+          </div>
+          <span class="dash-bar-value">${r.views}</span>
+        </div>
+      `
+        )
+        .join('') ||
+      '<p class="form-hint">No views yet — share your flats to start tracking.</p>';
+  }
+
+  const topEl = document.getElementById('dash-top-list');
+  if (topEl) {
+    topEl.innerHTML =
+      sortedByScore
+        .filter((r) => r.score > 0)
+        .slice(0, 5)
+        .map(
+          (r) => `
+        <li>
+          <span>${escapeHtml(r.apt.title)}</span>
+          <span class="dash-top-meta">${r.views} views · ${r.clicks} clicks · ${r.messages} msgs</span>
+        </li>
+      `
+        )
+        .join('') || '<li class="form-hint" style="list-style:none">No engagement yet</li>';
   }
 
   const tbody = document.getElementById('stats-tbody');
-  const rows = await Promise.all(
-    apartments.map(async (apt) => {
-      const s = await getApartmentStats(apt.id, config);
-      const conversion = s.views > 0 ? `${Math.round((s.messages / s.views) * 100)}%` : '—';
-      return `
+  tbody.innerHTML =
+    sortedByViews
+      .map(
+        (r) => `
         <tr>
-          <td>${escapeHtml(apt.title)}</td>
-          <td>${s.views}</td>
-          <td>${s.clicks}</td>
-          <td>${s.messages}</td>
-          <td>${conversion}</td>
+          <td>${escapeHtml(r.apt.title)}</td>
+          <td>${r.apt.active !== false ? '✅ Active' : '⏸ Hidden'}</td>
+          <td>${r.views}</td>
+          <td>${r.clicks}</td>
+          <td>${r.messages}</td>
+          <td>${r.aptClickRate}</td>
+          <td>${r.aptMessageRate}</td>
         </tr>
-      `;
-    })
-  );
-
-  tbody.innerHTML = rows.join('') || '<tr><td colspan="5" style="text-align:center;color:var(--text-muted)">No data yet</td></tr>';
+      `
+      )
+      .join('') ||
+    '<tr><td colspan="7" style="text-align:center;color:var(--text-muted)">No apartments yet</td></tr>';
 
   document.getElementById('reset-stats').onclick = () => {
     if (!confirm('Reset local browser stats? Cloud stats in Supabase are kept.')) return;
     resetStats();
     renderStats();
     showToast('Local stats reset');
+  };
+
+  document.getElementById('refresh-stats').onclick = () => {
+    renderStats();
+    showToast('Dashboard refreshed');
   };
 }
 

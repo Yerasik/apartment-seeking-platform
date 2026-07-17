@@ -29,9 +29,9 @@
       <aside class="admin-sidebar">
         <h2>🏠 Admin</h2>
         <ul class="admin-nav">
-          <li><button class="active" data-section="apartments">📋 Apartments</button></li>
+          <li><button class="active" data-section="stats">📊 Dashboard</button></li>
+          <li><button data-section="apartments">📋 Apartments</button></li>
           <li><button data-section="add">➕ Add apartment</button></li>
-          <li><button data-section="stats">📊 Statistics</button></li>
           <li><button data-section="settings">⚙️ Settings</button></li>
           <li><button data-section="export">📋 Copy / Import</button></li>
         </ul>
@@ -42,7 +42,7 @@
 
       <main class="admin-main">
         <!-- Apartments list -->
-        <section class="admin-section active" id="section-apartments">
+        <section class="admin-section" id="section-apartments">
           <h1>Apartments</h1>
           <table class="data-table" id="apartments-table">
             <thead>
@@ -179,27 +179,72 @@
           </form>
         </section>
 
-        <!-- Statistics -->
-        <section class="admin-section" id="section-stats">
-          <h1>Statistics</h1>
-          <p id="stats-source" class="form-hint" style="margin-bottom: 1rem;"></p>
-          <div class="stats-bar" style="justify-content: flex-start; margin-bottom: 2rem;">
-            <div class="stat-pill">👁 <strong id="admin-stat-views">0</strong> total views</div>
-            <div class="stat-pill">🔗 <strong id="admin-stat-clicks">0</strong> listing clicks</div>
-            <div class="stat-pill">💬 <strong id="admin-stat-messages">0</strong> landlord messages</div>
+        <!-- Dashboard -->
+        <section class="admin-section active" id="section-stats">
+          <div class="dashboard-header">
+            <div>
+              <h1>Dashboard</h1>
+              <p id="stats-source" class="form-hint"></p>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm" id="refresh-stats">↻ Refresh</button>
           </div>
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Apartment</th>
-                <th>Views</th>
-                <th>Clicks</th>
-                <th>Messages</th>
-                <th>Conversion</th>
-              </tr>
-            </thead>
-            <tbody id="stats-tbody"></tbody>
-          </table>
+
+          <div class="dashboard-cards">
+            <div class="dash-card">
+              <span class="dash-card-label">Active listings</span>
+              <strong class="dash-card-value" id="dash-active-listings">0</strong>
+            </div>
+            <div class="dash-card">
+              <span class="dash-card-label">Total views</span>
+              <strong class="dash-card-value" id="admin-stat-views">0</strong>
+            </div>
+            <div class="dash-card">
+              <span class="dash-card-label">Listing clicks</span>
+              <strong class="dash-card-value" id="admin-stat-clicks">0</strong>
+            </div>
+            <div class="dash-card">
+              <span class="dash-card-label">Landlord messages</span>
+              <strong class="dash-card-value" id="admin-stat-messages">0</strong>
+            </div>
+            <div class="dash-card">
+              <span class="dash-card-label">Click rate</span>
+              <strong class="dash-card-value" id="dash-click-rate">—</strong>
+            </div>
+            <div class="dash-card">
+              <span class="dash-card-label">Message rate</span>
+              <strong class="dash-card-value" id="dash-message-rate">—</strong>
+            </div>
+          </div>
+
+          <div class="dashboard-grid">
+            <div class="dashboard-panel">
+              <h2>Views by flat</h2>
+              <div class="dash-bars" id="dash-bars-views"></div>
+            </div>
+            <div class="dashboard-panel">
+              <h2>Top engagement</h2>
+              <ol class="dash-top-list" id="dash-top-list"></ol>
+            </div>
+          </div>
+
+          <div class="dashboard-panel dashboard-panel-full">
+            <h2>All flats</h2>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Apartment</th>
+                  <th>Status</th>
+                  <th>Views</th>
+                  <th>Clicks</th>
+                  <th>Messages</th>
+                  <th>Click rate</th>
+                  <th>Message rate</th>
+                </tr>
+              </thead>
+              <tbody id="stats-tbody"></tbody>
+            </table>
+          </div>
+
           <button class="btn btn-danger btn-sm" id="reset-stats" style="margin-top: 1.5rem;">Reset local stats</button>
         </section>
 
