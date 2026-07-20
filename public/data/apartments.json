@@ -47,28 +47,6 @@
     "createdAt": "2026-07-15T09:29:22.699Z"
   },
   {
-    "id": "apt-mrlvs1xl",
-    "title": "Wan Fat House · Unit Low Floor(3-12|12/F),Wan Fat House",
-    "address": "HK Island Wan Chai, Wan Fat House, Unit Low Floor(3-12|12/F),Wan Fat House",
-    "price": 9200,
-    "currency": "HKD",
-    "rooms": 1,
-    "kitchen": "separate",
-    "bathroom": "private",
-    "furnished": true,
-    "availableFrom": "",
-    "listingUrl": "https://www.28hse.com/en/rent/apartment/property-3932589",
-    "imageUrl": "https://i1.28hse.com/2026/01/202601051637186463793_large.jpg",
-    "landlordContact": "85244264536",
-    "contactType": "phone",
-    "description": "",
-    "tags": [
-      "furnished"
-    ],
-    "active": true,
-    "createdAt": "2026-07-15T09:31:39.849Z"
-  },
-  {
     "id": "apt-mrlvu0ao",
     "title": "Gold Coast Bay The Uppland · Unit Mid Floor(3-15|26/F),Tower 5(5A),PHASE 1",
     "address": "New Territories Tuen Mun Castle Peak Road, Gold Coast Bay The Uppland, Unit Mid Floor(3-15|26/F),Tower 5(5A),PHASE 1",
