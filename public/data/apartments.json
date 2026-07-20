@@ -281,5 +281,91 @@
     ],
     "active": true,
     "createdAt": "2026-07-17T03:59:14.331Z"
+  },
+  {
+    "id": "apt-mrt0uodg",
+    "title": "Lockhart House",
+    "address": "Causeway Bay",
+    "price": 9800,
+    "currency": "HKD",
+    "rooms": 1,
+    "kitchen": "separate",
+    "bathroom": "private",
+    "furnished": true,
+    "availableFrom": "",
+    "listingUrl": "https://www.28hse.com/en/rent/apartment/property-3323129",
+    "imageUrl": "https://i1.28hse.com/2026/07/202607191401536731433_large.jpg",
+    "landlordContact": "",
+    "contactType": "email",
+    "description": "Causeway Bay Lockhart House [Landlord Ads]",
+    "tags": [],
+    "active": true,
+    "createdAt": "2026-07-20T09:28:03.556Z"
+  },
+  {
+    "id": "apt-mrt0wd4x",
+    "title": "Luen Sen Building",
+    "address": "Wan Chai",
+    "price": 9000,
+    "currency": "HKD",
+    "rooms": 1,
+    "kitchen": "separate",
+    "bathroom": "private",
+    "furnished": true,
+    "availableFrom": "",
+    "listingUrl": "https://www.28hse.com/en/rent/apartment/property-3910801",
+    "imageUrl": "https://i1.28hse.com/2026/06/202606292058448060163_large.jpg",
+    "landlordContact": "",
+    "contactType": "email",
+    "description": "Professionally designed suites, 120sqft, fully equipped, washing and drying machine, cool/warm air conditioning, instant central hot water, Wi-Fi, decent environment, 1 minute to Wan Chai MTR station, no commission.",
+    "tags": [
+      "furnished"
+    ],
+    "active": true,
+    "createdAt": "2026-07-20T09:29:22.306Z"
+  },
+  {
+    "id": "apt-mrt0wwyn",
+    "title": "Leigyinn Building · Unit Unit B",
+    "address": "HK Island Causeway Bay, Leigyinn Building, Unit Unit B",
+    "price": 7600,
+    "currency": "HKD",
+    "rooms": 1,
+    "kitchen": "separate",
+    "bathroom": "private",
+    "furnished": true,
+    "availableFrom": "",
+    "listingUrl": "https://www.28hse.com/en/rent/apartment/property-3068889",
+    "imageUrl": "https://i1.28hse.com/2026/07/202607010624356331689_large.jpg",
+    "landlordContact": "",
+    "contactType": "email",
+    "description": "Causeway Bay Leigyinn Building [Landlord Ads]",
+    "tags": [
+      "furnished"
+    ],
+    "active": true,
+    "createdAt": "2026-07-20T09:29:48.000Z"
+  },
+  {
+    "id": "apt-mrt0yb5w",
+    "title": "Roca Centre",
+    "address": "North Point",
+    "price": 8720,
+    "currency": "HKD",
+    "rooms": 1,
+    "kitchen": "separate",
+    "bathroom": "private",
+    "furnished": true,
+    "availableFrom": "",
+    "listingUrl": "https://www.28hse.com/en/rent/apartment/property-3893096",
+    "imageUrl": "https://i1.28hse.com/2026/07/202607010629427462718_large.jpg",
+    "landlordContact": "",
+    "contactType": "email",
+    "description": "North Point Roca Centre [Landlord Ads]",
+    "tags": [
+      "furnished"
+    ],
+    "active": true,
+    "createdAt": "2026-07-20T09:30:53.061Z"
   }
 ]
