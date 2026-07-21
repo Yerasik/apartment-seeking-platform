@@ -36,24 +36,18 @@ function formatTemplate(template, data) {
 }
 
 function buildContactMessage(apt, config) {
-  const base = formatTemplate(config.contactMessageTemplate || '', {
-    groupName: config.groupName || 'Renting Together',
-    title: apt.title,
-    address: apt.address,
-    price: apt.price,
-    currency: apt.currency,
-  });
-
-  const details = [
-    apt.rooms ? `${apt.rooms} room(s)` : null,
-    apt.kitchen ? `Kitchen: ${apt.kitchen}` : null,
-    apt.availableFrom ? `Available from: ${apt.availableFrom}` : null,
-    apt.listingUrl ? `Listing: ${apt.listingUrl}` : null,
-  ]
-    .filter(Boolean)
-    .join('\n');
-
-  return details ? `${base}\n\n${details}` : base;
+  const listingLink = apt.listingUrl?.trim() || `${config.siteUrl || ''}/listings/${apt.id}.html`;
+  return formatTemplate(
+    config.contactMessageTemplate ||
+      "Hello! I'm from the {groupName} community. I'm interested in this listing:\n{listingUrl}\n\nCould you share more details? Thank you!",
+    {
+      groupName: config.groupName || 'Renting Together',
+      listingUrl: listingLink,
+      title: apt.title || '',
+    }
+  )
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
 
 async function resolveFlatImage(apt) {

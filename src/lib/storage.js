@@ -15,12 +15,16 @@ export async function loadConfig() {
         try {
           // Merge local overrides on top of file, but never drop file API keys.
           const local = JSON.parse(stored);
-          return {
+          const merged = {
             ...fileConfig,
             ...local,
             supabaseUrl: fileConfig.supabaseUrl || local.supabaseUrl || '',
             supabaseAnonKey: fileConfig.supabaseAnonKey || local.supabaseAnonKey || '',
+            // Prefer the short landlord message from the repo (rooms/kitchen no longer appended).
+            contactMessageTemplate:
+              fileConfig.contactMessageTemplate || local.contactMessageTemplate || '',
           };
+          return merged;
         } catch {
           return fileConfig;
         }
@@ -102,7 +106,7 @@ export function getDefaultConfig() {
     tagline: 'Find flats & flatmates together',
     groupName: 'Renting Together',
     contactMessageTemplate:
-      "Hello! I'm from the {groupName} community group. I'm interested in renting this apartment and would like to ask about the possibility of viewing it and discussing the terms. Could you please share more details? Thank you!",
+      "Hello! I'm from the {groupName} community. I'm interested in this listing:\n{listingUrl}\n\nCould you share more details? Thank you!",
     adminPassword: 'renting-together',
     siteUrl: 'https://yerasik.github.io/apartment-seeking-platform',
     whatsappAnnouncementTemplate:

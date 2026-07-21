@@ -2,25 +2,28 @@ import { formatTemplate } from './storage.js';
 import { buildListingShareUrl, checkSharePageLive, DEPLOY_SHARE_HINT } from './share.js';
 
 export function buildContactMessage(apartment, config) {
-  const template = config.contactMessageTemplate;
-  const base = formatTemplate(template, {
-    groupName: config.groupName,
-    title: apartment.title,
-    address: apartment.address,
-    price: apartment.price,
-    currency: apartment.currency,
-  });
+  const listingLink =
+    apartment.listingUrl?.trim() ||
+    buildListingShareUrl(apartment, config);
 
-  const details = [
-    apartment.rooms ? `${apartment.rooms} room(s)` : null,
-    apartment.kitchen ? `Kitchen: ${apartment.kitchen}` : null,
-    apartment.availableFrom ? `Available from: ${apartment.availableFrom}` : null,
-    apartment.listingUrl ? `Listing: ${apartment.listingUrl}` : null,
-  ]
-    .filter(Boolean)
-    .join('\n');
+  const template =
+    config.contactMessageTemplate ||
+    "Hello! I'm from the {groupName} community. I'm interested in this listing:\n{listingUrl}\n\nCould you share more details? Thank you!";
 
-  return details ? `${base}\n\n${details}` : base;
+  let text = formatTemplate(template, {
+    groupName: config.groupName || 'Renting Together',
+    listingUrl: listingLink,
+    title: apartment.title || '',
+  })
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+
+  // Ensure the listing link is always included, even with an older template.
+  if (listingLink && !text.includes(listingLink)) {
+    text = `${text}\n\n${listingLink}`;
+  }
+
+  return text;
 }
 
 export function buildAnnouncement(apartment, config) {
