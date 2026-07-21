@@ -515,5 +515,74 @@
     "featured": true,
     "active": true,
     "createdAt": "2026-07-21T07:46:45.349Z"
+  },
+  {
+    "id": "apt-mrugp00p",
+    "title": "Mong Kok Private Studio for Students",
+    "address": "Mong Kok",
+    "price": 8200,
+    "currency": "HKD",
+    "rooms": 1,
+    "kitchen": "separate",
+    "bathroom": "private",
+    "furnished": true,
+    "availableFrom": "",
+    "agentName": "Startopone",
+    "listingUrl": "",
+    "imageUrl": "https://vqvmlmgktwgsiperpdwu.supabase.co/storage/v1/object/public/listing-media/draft-mrugoc5e/1784626728219-yu9d3b.jpg",
+    "videoUrl": "",
+    "media": [
+      {
+        "url": "https://vqvmlmgktwgsiperpdwu.supabase.co/storage/v1/object/public/listing-media/draft-mrugoc5e/1784626728219-yu9d3b.jpg",
+        "type": "image"
+      },
+      {
+        "url": "https://vqvmlmgktwgsiperpdwu.supabase.co/storage/v1/object/public/listing-media/draft-mrugoc5e/1784626729231-ygg31e.jpg",
+        "type": "image"
+      }
+    ],
+    "landlordContact": "85265846254",
+    "contactType": "phone",
+    "description": "",
+    "tags": [],
+    "featured": true,
+    "active": true,
+    "createdAt": "2026-07-21T09:39:18.745Z"
+  },
+  {
+    "id": "apt-mrugrbp6",
+    "title": "Mong Kok apartment for students with divided zones",
+    "address": "Mong Kok",
+    "price": 8700,
+    "currency": "HKD",
+    "rooms": 1,
+    "kitchen": "separate",
+    "bathroom": "private",
+    "furnished": true,
+    "availableFrom": "",
+    "agentName": "Startopone",
+    "listingUrl": "",
+    "imageUrl": "https://vqvmlmgktwgsiperpdwu.supabase.co/storage/v1/object/public/listing-media/draft-mrugpq6v/1784626792984-gbg8s4.jpg",
+    "videoUrl": "",
+    "media": [
+      {
+        "url": "https://vqvmlmgktwgsiperpdwu.supabase.co/storage/v1/object/public/listing-media/draft-mrugpq6v/1784626792984-gbg8s4.jpg",
+        "type": "image"
+      },
+      {
+        "url": "https://vqvmlmgktwgsiperpdwu.supabase.co/storage/v1/object/public/listing-media/draft-mrugpwqg/1784626801216-r5ip7k.jpg",
+        "type": "image"
+      }
+    ],
+    "landlordContact": "85265846254",
+    "contactType": "phone",
+    "description": "",
+    "tags": [
+      "mtr-nearby",
+      "furnished"
+    ],
+    "featured": true,
+    "active": true,
+    "createdAt": "2026-07-21T09:41:07.194Z"
   }
 ]
