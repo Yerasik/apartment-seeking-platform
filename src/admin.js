@@ -11,12 +11,15 @@ import { DEPLOY_SHARE_HINT } from './lib/share.js';
 import { getTotalStats, getApartmentStats, resetStats } from './lib/tracker.js';
 import { sendCommunityAnnouncement } from './lib/messaging.js';
 import { fetchListingPreview } from './lib/linkPreview.js';
+import { uploadListingMedia, uploadManyMedia, apartmentMedia, coverImageUrl } from './lib/mediaUpload.js';
 
 const DEFAULT_CURRENCY = 'HKD';
 
 let config = {};
 let apartments = [];
 let editingId = null;
+let draftMedia = [];
+let statsAgentFilter = '';
 
 const loginScreen = document.getElementById('login-screen');
 const adminLayout = document.getElementById('admin-layout');
@@ -42,9 +45,11 @@ async function init() {
   setupNavigation();
   setupApartmentForm();
   setupImagePaste();
+  setupMediaUpload();
   setupListingPreview();
   setupSettingsForm();
   setupExport();
+  setupAgentFilter();
 }
 
 function showAdmin() {
@@ -70,6 +75,7 @@ function setupNavigation() {
 }
 
 async function renderApartmentsTable() {
+  refreshAgentSuggestions();
   const tbody = document.getElementById('apartments-tbody');
   const rows = await Promise.all(
     apartments.map(async (apt) => {
@@ -77,9 +83,9 @@ async function renderApartmentsTable() {
       return `
         <tr>
           <td>${escapeHtml(apt.title)}</td>
+          <td>${escapeHtml(apt.agentName || '—')}</td>
           <td>${apt.price} ${apt.currency}</td>
-          <td>${apt.rooms}</td>
-          <td>${apt.kitchen}</td>
+          <td>${apt.featured ? '⭐' : '—'}</td>
           <td>${stats.clicks}</td>
           <td>${stats.messages}</td>
           <td>${apt.active !== false ? '✅ Active' : '⏸ Hidden'}</td>
@@ -125,16 +131,22 @@ function editApartment(id) {
   document.getElementById('apt-furnished').value = String(apt.furnished ?? false);
   document.getElementById('apt-available').value = apt.availableFrom || '';
   document.getElementById('apt-listing-url').value = apt.listingUrl || '';
+  document.getElementById('apt-agent').value = apt.agentName || '';
   document.getElementById('apt-image-url').value = apt.imageUrl || '';
   document.getElementById('apt-contact').value = apt.landlordContact || '';
   document.getElementById('apt-contact-type').value = apt.contactType || 'email';
   document.getElementById('apt-description').value = apt.description || '';
   document.getElementById('apt-tags').value = (apt.tags || []).join(', ');
+  document.getElementById('apt-featured').checked = Boolean(apt.featured);
   document.getElementById('apt-active').checked = apt.active !== false;
   document.getElementById('apt-announce').checked = false;
 
-  if (apt.imageUrl) {
-    document.getElementById('image-preview').src = apt.imageUrl;
+  draftMedia = apartmentMedia(apt);
+  renderMediaThumbs();
+
+  const cover = coverImageUrl(apt) || apt.imageUrl;
+  if (cover && !cover.startsWith('data:')) {
+    document.getElementById('image-preview').src = cover;
     document.getElementById('image-preview-wrap').hidden = false;
   } else if (apt.listingUrl) {
     document.getElementById('image-preview-wrap').hidden = true;
@@ -176,7 +188,7 @@ function switchSection(name) {
 }
 
 function setupImagePaste() {
-  document.addEventListener('paste', (e) => {
+  document.addEventListener('paste', async (e) => {
     const addSection = document.getElementById('section-add');
     if (!addSection?.classList.contains('active')) return;
 
@@ -190,18 +202,110 @@ function setupImagePaste() {
       if (!file) continue;
 
       e.preventDefault();
-
-      const reader = new FileReader();
-      reader.onload = () => {
-        const dataUrl = reader.result;
-        document.getElementById('apt-image-url').value = dataUrl;
-        document.getElementById('image-preview').src = dataUrl;
-        document.getElementById('image-preview-wrap').hidden = false;
-        showToast('Image pasted');
-      };
-      reader.readAsDataURL(file);
+      const status = document.getElementById('media-upload-status');
+      status.textContent = 'Uploading pasted photo…';
+      try {
+        const aptId = editingId || `draft-${Date.now().toString(36)}`;
+        const uploaded = await uploadListingMedia(file, config, { apartmentId: aptId });
+        draftMedia.push(uploaded);
+        renderMediaThumbs();
+        syncCoverField();
+        status.textContent = 'Photo uploaded to cloud';
+        showToast('Photo uploaded — visible to everyone after you copy apartments.json to GitHub');
+      } catch (err) {
+        status.textContent = '';
+        showToast(err.message, 'error');
+      }
       return;
     }
+  });
+}
+
+function setupMediaUpload() {
+  const input = document.getElementById('apt-media-files');
+  const status = document.getElementById('media-upload-status');
+
+  input.addEventListener('change', async () => {
+    const files = input.files;
+    if (!files?.length) return;
+
+    status.textContent = 'Uploading…';
+    try {
+      const aptId = editingId || `draft-${Date.now().toString(36)}`;
+      const uploaded = await uploadManyMedia(files, config, {
+        apartmentId: aptId,
+        onProgress: (msg) => {
+          status.textContent = msg;
+        },
+      });
+      draftMedia = [...draftMedia, ...uploaded];
+      renderMediaThumbs();
+      syncCoverField();
+      status.textContent = `Uploaded ${uploaded.length} file(s)`;
+      showToast('Media uploaded to cloud');
+    } catch (err) {
+      status.textContent = '';
+      showToast(err.message, 'error');
+    }
+    input.value = '';
+  });
+}
+
+function renderMediaThumbs() {
+  const wrap = document.getElementById('media-thumbs');
+  if (!draftMedia.length) {
+    wrap.innerHTML = '';
+    return;
+  }
+
+  wrap.innerHTML = draftMedia
+    .map(
+      (item, i) => `
+      <div class="photo-thumb" data-index="${i}">
+        ${
+          item.type === 'video'
+            ? `<video src="${item.url}" muted preload="metadata"></video>`
+            : `<img src="${item.url}" alt="Media ${i + 1}" />`
+        }
+        <button type="button" class="photo-thumb-remove" data-index="${i}" title="Remove">✕</button>
+        ${i === 0 ? '<span class="photo-thumb-badge">Cover</span>' : ''}
+        ${item.type === 'video' ? '<span class="photo-thumb-badge video-badge">Video</span>' : ''}
+      </div>`
+    )
+    .join('');
+
+  wrap.querySelectorAll('.photo-thumb-remove').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      draftMedia.splice(Number(btn.dataset.index), 1);
+      renderMediaThumbs();
+      syncCoverField();
+    });
+  });
+}
+
+function syncCoverField() {
+  const cover = draftMedia.find((m) => m.type === 'image')?.url || draftMedia[0]?.url || '';
+  const field = document.getElementById('apt-image-url');
+  if (cover) {
+    field.value = cover;
+    document.getElementById('image-preview').src = cover;
+    document.getElementById('image-preview-wrap').hidden = false;
+  }
+}
+
+function refreshAgentSuggestions() {
+  const list = document.getElementById('agent-suggestions');
+  if (!list) return;
+  const names = [...new Set(apartments.map((a) => (a.agentName || '').trim()).filter(Boolean))].sort();
+  list.innerHTML = names.map((n) => `<option value="${escapeHtml(n)}"></option>`).join('');
+}
+
+function setupAgentFilter() {
+  const select = document.getElementById('stats-agent-filter');
+  if (!select) return;
+  select.addEventListener('change', () => {
+    statsAgentFilter = select.value;
+    renderStats();
   });
 }
 
@@ -278,6 +382,10 @@ function applyFormFromPreview(preview, { overwrite = false } = {}) {
     document.getElementById('apt-image-url').value = preview.imageUrl;
     document.getElementById('image-preview').src = preview.imageUrl;
     document.getElementById('image-preview-wrap').hidden = false;
+    if (!draftMedia.some((m) => m.url === preview.imageUrl)) {
+      draftMedia = [{ type: 'image', url: preview.imageUrl }, ...draftMedia];
+      renderMediaThumbs();
+    }
   }
 }
 
@@ -334,15 +442,27 @@ function setupApartmentForm() {
 
     let imageUrl = document.getElementById('apt-image-url').value.trim();
     const listingUrl = document.getElementById('apt-listing-url').value.trim();
+    let media = [...draftMedia];
 
-    if (!imageUrl && listingUrl) {
+    if (!media.length && !imageUrl && listingUrl) {
       try {
         const preview = await fetchListingPreview(listingUrl, config);
         imageUrl = preview.imageUrl || '';
+        if (imageUrl) media = [{ type: 'image', url: imageUrl }];
       } catch {
         /* manual fallback */
       }
     }
+
+    if (!media.length && imageUrl && !imageUrl.startsWith('data:')) {
+      media = [{ type: 'image', url: imageUrl }];
+    }
+
+    if ((!imageUrl || imageUrl.startsWith('data:')) && media.length) {
+      imageUrl = media.find((m) => m.type === 'image')?.url || media[0].url;
+    }
+
+    const videoUrl = media.find((m) => m.type === 'video')?.url || '';
 
     const apt = {
       id: editingId || generateId(),
@@ -355,8 +475,11 @@ function setupApartmentForm() {
       bathroom: document.getElementById('apt-bathroom').value,
       furnished: document.getElementById('apt-furnished').value === 'true',
       availableFrom: document.getElementById('apt-available').value || '',
+      agentName: document.getElementById('apt-agent').value.trim(),
       listingUrl,
       imageUrl,
+      videoUrl,
+      media,
       landlordContact: document.getElementById('apt-contact').value.trim(),
       contactType: document.getElementById('apt-contact-type').value,
       description: document.getElementById('apt-description').value.trim(),
@@ -364,6 +487,7 @@ function setupApartmentForm() {
         .split(',')
         .map((t) => t.trim())
         .filter(Boolean),
+      featured: document.getElementById('apt-featured').checked,
       active: document.getElementById('apt-active').checked,
       createdAt: editingId
         ? apartments.find((a) => a.id === editingId)?.createdAt
@@ -410,37 +534,58 @@ function resetForm() {
   document.getElementById('apartment-form').reset();
   document.getElementById('apt-currency').value = DEFAULT_CURRENCY;
   document.getElementById('apt-rooms').value = 1;
+  document.getElementById('apt-featured').checked = false;
   document.getElementById('apt-active').checked = true;
   document.getElementById('apt-announce').checked = true;
   document.getElementById('image-preview-wrap').hidden = true;
   document.getElementById('image-preview').removeAttribute('src');
+  draftMedia = [];
+  renderMediaThumbs();
+  document.getElementById('media-upload-status').textContent = '';
+}
+
+function agentKey(apt) {
+  return (apt.agentName || '').trim() || 'Other / unassigned';
 }
 
 async function renderStats() {
   const totals = await getTotalStats(config);
-  const activeCount = apartments.filter((a) => a.active !== false).length;
+  refreshAgentFilterOptions();
 
-  document.getElementById('admin-stat-views').textContent = totals.totalViews;
-  document.getElementById('admin-stat-clicks').textContent = totals.totalClicks;
-  document.getElementById('admin-stat-messages').textContent = totals.totalMessages;
+  const filteredApts = statsAgentFilter
+    ? apartments.filter((a) => agentKey(a) === statsAgentFilter)
+    : apartments;
+
+  const sumFor = (bucket) =>
+    filteredApts.reduce((n, apt) => n + (totals.perApartment[bucket]?.[apt.id] || 0), 0);
+
+  const totalViews = sumFor('views');
+  const totalClicks = sumFor('clicks');
+  const totalMessages = sumFor('messages');
+  const activeCount = filteredApts.filter((a) => a.active !== false).length;
+
+  document.getElementById('admin-stat-views').textContent = totalViews;
+  document.getElementById('admin-stat-clicks').textContent = totalClicks;
+  document.getElementById('admin-stat-messages').textContent = totalMessages;
   document.getElementById('dash-active-listings').textContent = activeCount;
 
-  const clickRate =
-    totals.totalViews > 0 ? `${Math.round((totals.totalClicks / totals.totalViews) * 100)}%` : '—';
-  const messageRate =
-    totals.totalViews > 0 ? `${Math.round((totals.totalMessages / totals.totalViews) * 100)}%` : '—';
+  const clickRate = totalViews > 0 ? `${Math.round((totalClicks / totalViews) * 100)}%` : '—';
+  const messageRate = totalViews > 0 ? `${Math.round((totalMessages / totalViews) * 100)}%` : '—';
   document.getElementById('dash-click-rate').textContent = clickRate;
   document.getElementById('dash-message-rate').textContent = messageRate;
 
   const sourceEl = document.getElementById('stats-source');
   if (sourceEl) {
-    sourceEl.textContent =
+    const base =
       totals.source === 'supabase'
         ? 'Stats from all visitors (Supabase).'
         : 'Stats from this browser only — add Supabase in Settings to track everyone.';
+    sourceEl.textContent = statsAgentFilter ? `${base} Filtered by agent: ${statsAgentFilter}` : base;
   }
 
-  const rows = apartments.map((apt) => {
+  renderAgentSummary(totals);
+
+  const rows = filteredApts.map((apt) => {
     const views = totals.perApartment.views?.[apt.id] || 0;
     const clicks = totals.perApartment.clicks?.[apt.id] || 0;
     const messages = totals.perApartment.messages?.[apt.id] || 0;
@@ -506,7 +651,7 @@ async function renderStats() {
       .map(
         (r) => `
         <tr>
-          <td>${escapeHtml(r.apt.title)}</td>
+          <td>${escapeHtml(r.apt.title)}${r.apt.agentName ? ` <span class="form-hint">(${escapeHtml(r.apt.agentName)})</span>` : ''}</td>
           <td>${r.apt.active !== false ? '✅ Active' : '⏸ Hidden'}</td>
           <td>${r.views}</td>
           <td>${r.clicks}</td>
@@ -530,6 +675,65 @@ async function renderStats() {
     renderStats();
     showToast('Dashboard refreshed');
   };
+}
+
+function refreshAgentFilterOptions() {
+  const select = document.getElementById('stats-agent-filter');
+  if (!select) return;
+  const current = statsAgentFilter;
+  const names = [...new Set(apartments.map(agentKey))].sort((a, b) => {
+    if (a === 'Other / unassigned') return 1;
+    if (b === 'Other / unassigned') return -1;
+    return a.localeCompare(b);
+  });
+  select.innerHTML =
+    `<option value="">All agents</option>` +
+    names.map((n) => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+  select.value = names.includes(current) ? current : '';
+  statsAgentFilter = select.value;
+}
+
+function renderAgentSummary(totals) {
+  const tbody = document.getElementById('agent-stats-tbody');
+  if (!tbody) return;
+
+  const byAgent = new Map();
+  for (const apt of apartments) {
+    const key = agentKey(apt);
+    if (!byAgent.has(key)) {
+      byAgent.set(key, { listings: 0, views: 0, clicks: 0, messages: 0 });
+    }
+    const row = byAgent.get(key);
+    row.listings += 1;
+    row.views += totals.perApartment.views?.[apt.id] || 0;
+    row.clicks += totals.perApartment.clicks?.[apt.id] || 0;
+    row.messages += totals.perApartment.messages?.[apt.id] || 0;
+  }
+
+  const sorted = [...byAgent.entries()].sort((a, b) => b[1].views - a[1].views);
+  tbody.innerHTML =
+    sorted
+      .map(
+        ([name, s]) => `
+      <tr>
+        <td><button type="button" class="btn btn-secondary btn-sm filter-agent" data-agent="${escapeHtml(name)}">${escapeHtml(name)}</button></td>
+        <td>${s.listings}</td>
+        <td>${s.views}</td>
+        <td>${s.clicks}</td>
+        <td>${s.messages}</td>
+      </tr>`
+      )
+      .join('') ||
+    '<tr><td colspan="5" style="text-align:center;color:var(--text-muted)">No data yet</td></tr>';
+
+  tbody.querySelectorAll('.filter-agent').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      statsAgentFilter = btn.dataset.agent;
+      const select = document.getElementById('stats-agent-filter');
+      if (select) select.value = statsAgentFilter;
+      renderStats();
+    });
+  });
 }
 
 function populateSettingsForm() {
@@ -566,7 +770,7 @@ function setupSettingsForm() {
     };
 
     saveConfig(config);
-    showToast('Settings saved!');
+    showToast('Settings saved — Copy config.json to GitHub so other devices get the same API keys');
   });
 }
 
@@ -584,7 +788,7 @@ function setupExport() {
   document.getElementById('export-config').addEventListener('click', async () => {
     try {
       await copyJsonToClipboard(config);
-      showToast('config.json copied to clipboard');
+      showToast('config.json copied (includes API keys for GitHub)');
     } catch {
       showToast('Could not copy to clipboard', 'error');
     }

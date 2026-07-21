@@ -48,9 +48,9 @@
             <thead>
               <tr>
                 <th>Title</th>
+                <th>Agent</th>
                 <th>Price</th>
-                <th>Rooms</th>
-                <th>Kitchen</th>
+                <th>Top</th>
                 <th>Clicks</th>
                 <th>Messages</th>
                 <th>Status</th>
@@ -120,6 +120,12 @@
               <input type="date" id="apt-available" />
             </div>
             <div class="form-group">
+              <label for="apt-agent">Agent / agency name</label>
+              <input type="text" id="apt-agent" placeholder="e.g. Midland Realty, John Chan" list="agent-suggestions" />
+              <datalist id="agent-suggestions"></datalist>
+              <p class="form-hint">Used only in the admin dashboard for stats by agent. Not shown on the public site.</p>
+            </div>
+            <div class="form-group">
               <label for="apt-listing-url">Listing URL</label>
               <div class="input-with-button">
                 <input type="url" id="apt-listing-url" placeholder="https://..." />
@@ -128,12 +134,22 @@
               <p class="form-hint">Paste a 28Hse or Spacious link to auto-fill the form (price, address, photo, etc.).</p>
             </div>
             <div class="form-group">
-              <label for="apt-image-url">Image <span class="label-optional">(URL or paste)</span></label>
-              <input type="text" id="apt-image-url" placeholder="Paste image with Ctrl+V, or enter a URL" />
-              <p class="form-hint">Press Ctrl+V (Cmd+V on Mac) anywhere on this form to paste a photo. Or leave empty to use the image from the listing page.</p>
+              <label>Photos &amp; videos</label>
+              <div class="photo-upload-row">
+                <label class="btn btn-secondary btn-sm photo-upload-btn" for="apt-media-files">📷 Upload from computer</label>
+                <input type="file" id="apt-media-files" accept="image/*,video/*" multiple hidden />
+                <span class="form-hint" id="media-upload-status"></span>
+              </div>
+              <p class="form-hint">Uploads to Supabase Storage so every visitor sees them. Then copy apartments.json to GitHub.</p>
+              <div class="photo-thumbs" id="media-thumbs"></div>
+            </div>
+            <div class="form-group">
+              <label for="apt-image-url">Cover image URL <span class="label-optional">(optional)</span></label>
+              <input type="text" id="apt-image-url" placeholder="Auto-filled from upload, paste, or listing link" />
+              <p class="form-hint">Ctrl+V pastes a photo and uploads it to the cloud when Supabase is configured.</p>
             </div>
             <div class="image-preview-wrap" id="image-preview-wrap" hidden>
-              <p class="form-hint">Image preview:</p>
+              <p class="form-hint">Cover preview:</p>
               <div class="image-preview-box">
                 <img id="image-preview" alt="Listing preview" />
               </div>
@@ -163,6 +179,12 @@
             </div>
             <div class="form-group">
               <label>
+                <input type="checkbox" id="apt-featured" /> Top pick / sponsored (show in Top picks)
+              </label>
+              <p class="form-hint">Marked flats appear in “Top picks” on the public site. Agent name is admin-only (dashboard stats).</p>
+            </div>
+            <div class="form-group">
+              <label>
                 <input type="checkbox" id="apt-active" checked /> Active listing
               </label>
             </div>
@@ -186,7 +208,29 @@
               <h1>Dashboard</h1>
               <p id="stats-source" class="form-hint"></p>
             </div>
-            <button type="button" class="btn btn-secondary btn-sm" id="refresh-stats">↻ Refresh</button>
+            <div class="dashboard-header-actions">
+              <label class="agent-filter-label" for="stats-agent-filter">Agent</label>
+              <select id="stats-agent-filter">
+                <option value="">All agents</option>
+              </select>
+              <button type="button" class="btn btn-secondary btn-sm" id="refresh-stats">↻ Refresh</button>
+            </div>
+          </div>
+
+          <div class="dashboard-panel dashboard-panel-full" id="agent-summary-panel" style="margin-bottom: 1.25rem;">
+            <h2>Stats by agent</h2>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Agent</th>
+                  <th>Listings</th>
+                  <th>Views</th>
+                  <th>Clicks</th>
+                  <th>Messages</th>
+                </tr>
+              </thead>
+              <tbody id="agent-stats-tbody"></tbody>
+            </table>
           </div>
 
           <div class="dashboard-cards">
@@ -299,16 +343,16 @@
               <input type="text" id="cfg-admin-password" />
             </div>
             <hr style="border: none; border-top: 1px solid var(--border); margin: 1.5rem 0;" />
-            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Cloud stats (tracks all visitors)</p>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">Supabase (stats + photo/video hosting) — stored in GitHub config.json</p>
             <div class="form-group">
               <label for="cfg-supabase-url">Supabase Project URL</label>
               <input type="url" id="cfg-supabase-url" placeholder="https://abcdefghijklmnop.supabase.co" />
-              <p class="form-hint">In Supabase: open your project → click <strong>Connect</strong> (top) → <strong>API Keys</strong> tab → copy <strong>Project URL</strong>. Or: Project Settings (gear, bottom-left) → <strong>Data API</strong>.</p>
+              <p class="form-hint">Save settings, then Copy config.json to GitHub so every device uses the same keys.</p>
             </div>
             <div class="form-group">
               <label for="cfg-supabase-key">Supabase anon / publishable key</label>
-              <input type="text" id="cfg-supabase-key" placeholder="eyJhbGciOiJIUzI1NiIs..." />
-              <p class="form-hint">Same place: copy the <strong>anon</strong> or <strong>publishable</strong> key (not the service_role secret). Run <code>scripts/supabase-setup.sql</code> in Supabase SQL Editor first, then save & copy config.json to GitHub.</p>
+              <input type="text" id="cfg-supabase-key" placeholder="eyJhbGciOiJIUzI1NiIs... or sb_publishable_..." />
+              <p class="form-hint">Run <code>scripts/supabase-setup.sql</code> once (creates events table + listing-media storage bucket).</p>
             </div>
             <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Save settings</button>
           </form>

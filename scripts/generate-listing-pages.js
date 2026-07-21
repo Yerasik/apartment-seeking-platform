@@ -97,17 +97,19 @@ async function resolveFlatImage(apt) {
 }
 
 function buildTrackingScript(aptId, config) {
-  if (!config.supabaseUrl?.trim() || !config.supabaseAnonKey?.trim()) {
+  const url = (config.supabaseUrl || process.env.SUPABASE_URL || '').trim();
+  const key = (config.supabaseAnonKey || process.env.SUPABASE_ANON_KEY || '').trim();
+  if (!url || !key) {
     return '';
   }
 
-  const url = JSON.stringify(config.supabaseUrl);
-  const key = JSON.stringify(config.supabaseAnonKey);
+  const urlJson = JSON.stringify(url);
+  const keyJson = JSON.stringify(key);
   const id = JSON.stringify(aptId);
 
   return `<script>
 (function () {
-  var cfg = { url: ${url}, key: ${key}, id: ${id} };
+  var cfg = { url: ${urlJson}, key: ${keyJson}, id: ${id} };
   function track(type) {
     fetch(cfg.url + '/rest/v1/events', {
       method: 'POST',

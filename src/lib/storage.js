@@ -5,6 +5,32 @@ const STORAGE_KEYS = {
 };
 
 export async function loadConfig() {
+  // Prefer committed GitHub config so keys work on every device.
+  try {
+    const res = await fetch(`./data/config.json?t=${Date.now()}`, { cache: 'no-store' });
+    if (res.ok) {
+      const fileConfig = await res.json();
+      const stored = localStorage.getItem(STORAGE_KEYS.config);
+      if (stored) {
+        try {
+          // Merge local overrides on top of file, but never drop file API keys.
+          const local = JSON.parse(stored);
+          return {
+            ...fileConfig,
+            ...local,
+            supabaseUrl: fileConfig.supabaseUrl || local.supabaseUrl || '',
+            supabaseAnonKey: fileConfig.supabaseAnonKey || local.supabaseAnonKey || '',
+          };
+        } catch {
+          return fileConfig;
+        }
+      }
+      return fileConfig;
+    }
+  } catch {
+    /* fall through */
+  }
+
   const stored = localStorage.getItem(STORAGE_KEYS.config);
   if (stored) {
     try {
@@ -12,13 +38,6 @@ export async function loadConfig() {
     } catch {
       /* fall through */
     }
-  }
-
-  try {
-    const res = await fetch('./data/config.json');
-    if (res.ok) return await res.json();
-  } catch {
-    /* offline or missing */
   }
 
   return getDefaultConfig();
