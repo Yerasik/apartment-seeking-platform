@@ -1,6 +1,10 @@
 const BUCKET = 'listing-media';
-const MAX_IMAGE_WIDTH = 1600;
-const JPEG_QUALITY = 0.85;
+/** Max long edge in pixels — enough for cards, much smaller uploads */
+const MAX_IMAGE_EDGE = 1000;
+/** JPEG quality 0–1 (lower = smaller files) */
+const JPEG_QUALITY = 0.62;
+/** Soft cap after compress; re-encode harder if still over this */
+const MAX_IMAGE_BYTES = 350 * 1024; // ~350 KB
 
 function supabaseHeaders(config, contentType) {
   const headers = {
@@ -17,7 +21,30 @@ function requireSupabase(config) {
   }
 }
 
-function compressImageFile(file, maxWidth = MAX_IMAGE_WIDTH, quality = JPEG_QUALITY) {
+function drawToJpegBlob(img, maxEdge, quality) {
+  const scale = Math.min(1, maxEdge / Math.max(img.width, img.height));
+  const width = Math.max(1, Math.round(img.width * scale));
+  const height = Math.max(1, Math.round(img.height * scale));
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(img, 0, 0, width, height);
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) reject(new Error('Image compress failed'));
+        else resolve(blob);
+      },
+      'image/jpeg',
+      quality
+    );
+  });
+}
+
+function compressImageFile(file, maxEdge = MAX_IMAGE_EDGE, quality = JPEG_QUALITY) {
   return new Promise((resolve, reject) => {
     if (!file.type.startsWith('image/')) {
       resolve(file);
@@ -29,23 +56,28 @@ function compressImageFile(file, maxWidth = MAX_IMAGE_WIDTH, quality = JPEG_QUAL
     reader.onload = () => {
       const img = new Image();
       img.onerror = () => reject(new Error('Could not load image'));
-      img.onload = () => {
-        const scale = Math.min(1, maxWidth / img.width);
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.round(img.width * scale);
-        canvas.height = Math.round(img.height * scale);
-        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob(
-          (blob) => {
-            if (!blob) {
-              reject(new Error('Image compress failed'));
-              return;
-            }
-            resolve(new File([blob], file.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' }));
-          },
-          'image/jpeg',
-          quality
-        );
+      img.onload = async () => {
+        try {
+          let edge = maxEdge;
+          let q = quality;
+          let blob = await drawToJpegBlob(img, edge, q);
+
+          // Second pass if still large
+          if (blob.size > MAX_IMAGE_BYTES) {
+            edge = Math.min(edge, 800);
+            q = Math.min(q, 0.5);
+            blob = await drawToJpegBlob(img, edge, q);
+          }
+          if (blob.size > MAX_IMAGE_BYTES) {
+            edge = Math.min(edge, 640);
+            q = Math.min(q, 0.42);
+            blob = await drawToJpegBlob(img, edge, q);
+          }
+
+          resolve(new File([blob], file.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' }));
+        } catch (err) {
+          reject(err);
+        }
       };
       img.src = reader.result;
     };
@@ -70,11 +102,14 @@ export async function uploadListingMedia(file, config, { apartmentId = 'misc' } 
     throw new Error('Only image or video files are supported');
   }
 
-  if (isVideo && file.size > 50 * 1024 * 1024) {
-    throw new Error('Video must be under 50MB');
+  if (isVideo && file.size > 15 * 1024 * 1024) {
+    throw new Error('Video must be under 15MB (keep clips short to save storage)');
   }
 
   const prepared = isImage ? await compressImageFile(file) : file;
+  if (isImage && prepared.size > 800 * 1024) {
+    throw new Error('Photo is still too large after compression. Try a smaller image.');
+  }
   const ext = prepared.name.split('.').pop()?.toLowerCase() || (isVideo ? 'mp4' : 'jpg');
   const path = `${apartmentId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
 
