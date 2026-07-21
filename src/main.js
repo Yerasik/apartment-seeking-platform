@@ -10,6 +10,7 @@ import {
 } from './lib/messaging.js';
 import { resolveApartmentImage } from './lib/linkPreview.js';
 import { apartmentMedia, coverImageUrl } from './lib/mediaUpload.js';
+import { buildListingShareUrl } from './lib/share.js';
 
 let config = {};
 let apartments = [];
@@ -79,7 +80,9 @@ async function buildCardHtml(apt) {
     <article class="apartment-card${apt.featured ? ' is-featured' : ''}" data-id="${apt.id}">
       <div class="card-image${gallery.length > 1 ? ' has-gallery' : ''}" data-apt-id="${apt.id}">
         ${apt.featured ? '<span class="featured-badge">Top pick</span>' : ''}
+        <a class="card-image-link" href="${escapeAttr(buildListingShareUrl(apt, config))}" aria-label="View all photos">
         ${mediaHtml}
+        </a>
         ${
           gallery.length > 1
             ? `<button type="button" class="gallery-nav gallery-prev" aria-label="Previous">‹</button>
@@ -107,6 +110,7 @@ async function buildCardHtml(apt) {
         ${apt.description ? `<p class="card-description">${escapeHtml(apt.description)}</p>` : ''}
         ${apt.tags?.length ? `<div class="card-tags">${apt.tags.map((t) => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
         <div class="card-actions">
+          <a class="btn btn-primary btn-sm" href="${escapeAttr(buildListingShareUrl(apt, config))}">🖼 View all photos</a>
           ${
             apt.contactType === 'phone' && apt.landlordContact
               ? `<button class="btn btn-success btn-sm contact-landlord" data-id="${apt.id}">💬 WhatsApp landlord</button>`

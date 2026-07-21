@@ -881,8 +881,16 @@ a:hover {
   position: relative;
 }
 
-.card-image video.gallery-main,
-.card-image img.gallery-main {
+.card-image-link {
+  display: block;
+  width: 100%;
+  height: 100%;
+  color: inherit;
+}
+
+.card-image-link .gallery-main,
+.card-image-link img,
+.card-image-link video {
   width: 100%;
   height: 100%;
   object-fit: cover;

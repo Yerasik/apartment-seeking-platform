@@ -51,6 +51,10 @@ function buildContactMessage(apt, config) {
 }
 
 async function resolveFlatImage(apt) {
+  const media = collectApartmentMedia(apt);
+  const firstImage = media.find((m) => m.type === 'image' && m.url.startsWith('http'));
+  if (firstImage) return firstImage.url;
+
   if (apt.imageUrl?.startsWith('http')) {
     return apt.imageUrl;
   }
@@ -88,6 +92,121 @@ async function resolveFlatImage(apt) {
   }
 
   return '';
+}
+
+/** Public HTTPS media only (skip huge data: URLs in static pages). */
+function collectApartmentMedia(apt) {
+  const list = [];
+  const seen = new Set();
+
+  const push = (type, url) => {
+    if (!url || typeof url !== 'string') return;
+    if (!url.startsWith('http')) return;
+    if (seen.has(url)) return;
+    seen.add(url);
+    list.push({ type: type === 'video' ? 'video' : 'image', url });
+  };
+
+  if (Array.isArray(apt.media)) {
+    for (const item of apt.media) {
+      push(item?.type || 'image', item?.url);
+    }
+  }
+  if (Array.isArray(apt.images)) {
+    for (const url of apt.images) push('image', url);
+  }
+  push('image', apt.imageUrl);
+  push('video', apt.videoUrl);
+
+  return list;
+}
+
+function buildGalleryHtml(media, title) {
+  if (!media.length) {
+    return '<div class="hero"><div class="hero-placeholder">🏠</div></div>';
+  }
+
+  const slides = media
+    .map((item, i) => {
+      if (item.type === 'video') {
+        return `<div class="slide${i === 0 ? ' active' : ''}" data-index="${i}">
+          <video src="${escapeHtml(item.url)}" controls playsinline preload="metadata"></video>
+        </div>`;
+      }
+      return `<div class="slide${i === 0 ? ' active' : ''}" data-index="${i}">
+        <img src="${escapeHtml(item.url)}" alt="${escapeHtml(title)} photo ${i + 1}" loading="${i === 0 ? 'eager' : 'lazy'}" />
+      </div>`;
+    })
+    .join('');
+
+  const dots =
+    media.length > 1
+      ? `<div class="gallery-dots">${media
+          .map(
+            (_, i) =>
+              `<button type="button" class="dot${i === 0 ? ' active' : ''}" data-index="${i}" aria-label="Photo ${i + 1}"></button>`
+          )
+          .join('')}</div>`
+      : '';
+
+  const nav =
+    media.length > 1
+      ? `<button type="button" class="gallery-btn prev" aria-label="Previous photo">‹</button>
+         <button type="button" class="gallery-btn next" aria-label="Next photo">›</button>
+         <div class="gallery-count"><span id="gallery-pos">1</span> / ${media.length}</div>`
+      : '';
+
+  const thumbs =
+    media.length > 1
+      ? `<div class="thumbs">${media
+          .map((item, i) =>
+            item.type === 'video'
+              ? `<button type="button" class="thumb${i === 0 ? ' active' : ''}" data-index="${i}" aria-label="Video ${i + 1}"><span class="thumb-video">▶</span></button>`
+              : `<button type="button" class="thumb${i === 0 ? ' active' : ''}" data-index="${i}" aria-label="Photo ${i + 1}"><img src="${escapeHtml(item.url)}" alt="" loading="lazy" /></button>`
+          )
+          .join('')}</div>`
+      : '';
+
+  return `<div class="gallery" id="gallery" data-count="${media.length}">
+    <div class="hero slides">${slides}${nav}${dots}</div>
+    ${thumbs}
+  </div>
+  <script>
+  (function () {
+    var gallery = document.getElementById('gallery');
+    if (!gallery) return;
+    var count = Number(gallery.getAttribute('data-count') || 1);
+    if (count < 2) return;
+    var index = 0;
+    var slides = gallery.querySelectorAll('.slide');
+    var dots = gallery.querySelectorAll('.dot');
+    var thumbs = gallery.querySelectorAll('.thumb');
+    var pos = document.getElementById('gallery-pos');
+    function show(i) {
+      index = (i + count) % count;
+      slides.forEach(function (s, n) { s.classList.toggle('active', n === index); });
+      dots.forEach(function (d, n) { d.classList.toggle('active', n === index); });
+      thumbs.forEach(function (t, n) { t.classList.toggle('active', n === index); });
+      if (pos) pos.textContent = String(index + 1);
+      slides.forEach(function (s) {
+        var v = s.querySelector('video');
+        if (v && !s.classList.contains('active')) { try { v.pause(); } catch (e) {} }
+      });
+    }
+    gallery.querySelector('.prev')?.addEventListener('click', function () { show(index - 1); });
+    gallery.querySelector('.next')?.addEventListener('click', function () { show(index + 1); });
+    dots.forEach(function (d) { d.addEventListener('click', function () { show(Number(d.dataset.index)); }); });
+    thumbs.forEach(function (t) { t.addEventListener('click', function () { show(Number(t.dataset.index)); }); });
+    var startX = 0;
+    var hero = gallery.querySelector('.hero');
+    hero.addEventListener('touchstart', function (e) { startX = e.changedTouches[0].screenX; }, { passive: true });
+    hero.addEventListener('touchend', function (e) {
+      var dx = e.changedTouches[0].screenX - startX;
+      if (Math.abs(dx) < 40) return;
+      show(index + (dx < 0 ? 1 : -1));
+    }, { passive: true });
+  })();
+  </script>`;
 }
 
 function buildTrackingScript(aptId, config) {
@@ -158,8 +277,12 @@ for (const apt of apartments) {
   activeIds.add(apt.id);
 
   const pageUrl = `${siteUrl}${basePath}/listings/${apt.id}.html`;
-  const allListingsUrl = `${siteUrl}${basePath}/index.html#${apt.id}`;
-  const imageUrl = await resolveFlatImage(apt);
+  const allListingsUrl = `${siteUrl}${basePath}/#listings`;
+  let media = collectApartmentMedia(apt);
+  const imageUrl = media.find((m) => m.type === 'image')?.url || (await resolveFlatImage(apt));
+  if (imageUrl && !media.some((m) => m.url === imageUrl)) {
+    media = [{ type: 'image', url: imageUrl }, ...media];
+  }
   if (imageUrl) withPhoto += 1;
 
   const pageTitle = `${apt.title} — ${config.siteName || 'Renting Together'}`;
@@ -176,9 +299,7 @@ for (const apt of apartments) {
     <meta name="twitter:image" content="${escapeHtml(imageUrl)}" />`
     : '';
 
-  const heroImage = imageUrl
-    ? `<img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(apt.title)}" />`
-    : '<div class="hero-placeholder">🏠</div>';
+  const galleryHtml = buildGalleryHtml(media, apt.title);
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -211,13 +332,98 @@ for (const apt of apartments) {
         overflow: hidden;
         box-shadow: 0 8px 32px rgba(0,0,0,.08);
       }
-      .hero img { width: 100%; height: 260px; object-fit: cover; display: block; background: #dce8e2; }
+      .hero { position: relative; background: #dce8e2; }
+      .slides { position: relative; min-height: 260px; }
+      .slide { display: none; }
+      .slide.active { display: block; }
+      .hero img, .hero video {
+        width: 100%;
+        height: 280px;
+        object-fit: cover;
+        display: block;
+        background: #dce8e2;
+      }
       .hero-placeholder {
         height: 260px;
         display: grid;
         place-items: center;
         font-size: 4rem;
         background: #dce8e2;
+      }
+      .gallery-btn {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 36px;
+        height: 36px;
+        border: none;
+        border-radius: 50%;
+        background: rgba(0,0,0,.45);
+        color: #fff;
+        font-size: 1.4rem;
+        cursor: pointer;
+        z-index: 2;
+        line-height: 1;
+      }
+      .gallery-btn.prev { left: .6rem; }
+      .gallery-btn.next { right: .6rem; }
+      .gallery-count {
+        position: absolute;
+        top: .6rem;
+        right: .6rem;
+        background: rgba(0,0,0,.5);
+        color: #fff;
+        font-size: .75rem;
+        padding: .2rem .5rem;
+        border-radius: 999px;
+        z-index: 2;
+      }
+      .gallery-dots {
+        position: absolute;
+        bottom: .65rem;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: center;
+        gap: .35rem;
+        z-index: 2;
+      }
+      .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        border: none;
+        background: rgba(255,255,255,.45);
+        cursor: pointer;
+        padding: 0;
+      }
+      .dot.active { background: #fff; }
+      .thumbs {
+        display: flex;
+        gap: .4rem;
+        padding: .65rem .75rem 0;
+        overflow-x: auto;
+      }
+      .thumb {
+        flex: 0 0 56px;
+        width: 56px;
+        height: 44px;
+        border: 2px solid transparent;
+        border-radius: 8px;
+        overflow: hidden;
+        padding: 0;
+        background: #dce8e2;
+        cursor: pointer;
+      }
+      .thumb.active { border-color: #1a5f4a; }
+      .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+      .thumb-video {
+        display: grid;
+        place-items: center;
+        width: 100%;
+        height: 100%;
+        color: #1a5f4a;
+        font-size: .85rem;
       }
       .body { padding: 1.25rem 1.5rem 1.5rem; }
       .brand { color: #1a5f4a; font-size: .85rem; font-weight: 600; margin-bottom: .5rem; }
@@ -247,9 +453,7 @@ for (const apt of apartments) {
   <body>
     <div class="wrap">
       <div class="card">
-        <div class="hero">
-          ${heroImage}
-        </div>
+        ${galleryHtml}
         <div class="body">
           <div class="brand">${escapeHtml(config.siteName || 'Renting Together')}</div>
           <h1>${escapeHtml(apt.title)}</h1>
