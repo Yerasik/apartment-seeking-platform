@@ -7,15 +7,28 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, '..');
 const listingsDir = path.join(root, 'public', 'listings');
 
-const basePath =
-  process.env.GITHUB_PAGES === 'true' ? '/apartment-seeking-platform' : '';
-
 function readJson(relativePath, fallback) {
   try {
     return JSON.parse(fs.readFileSync(path.join(root, relativePath), 'utf8'));
   } catch {
     return fallback;
   }
+}
+
+/** Join site root + path without doubling /apartment-seeking-platform. */
+function sitePath(siteRoot, ...parts) {
+  const rootUrl = String(siteRoot || '').replace(/\/$/, '');
+  const suffix = parts
+    .filter(Boolean)
+    .map((p) => String(p).replace(/^\/+|\/+$/g, ''))
+    .filter(Boolean)
+    .join('/');
+  if (!suffix) return `${rootUrl}/`;
+  // Avoid …/apartment-seeking-platform/apartment-seeking-platform/…
+  if (suffix.startsWith('apartment-seeking-platform/')) {
+    return `${rootUrl}/${suffix.slice('apartment-seeking-platform/'.length)}`;
+  }
+  return `${rootUrl}/${suffix}`;
 }
 
 function escapeHtml(str) {
@@ -276,8 +289,8 @@ for (const apt of apartments) {
 
   activeIds.add(apt.id);
 
-  const pageUrl = `${siteUrl}${basePath}/listings/${apt.id}.html`;
-  const allListingsUrl = `${siteUrl}${basePath}/#listings`;
+  const pageUrl = sitePath(siteUrl, 'listings', `${apt.id}.html`);
+  const allListingsUrl = `${siteUrl}/#listings`;
   let media = collectApartmentMedia(apt);
   const imageUrl = media.find((m) => m.type === 'image')?.url || (await resolveFlatImage(apt));
   if (imageUrl && !media.some((m) => m.url === imageUrl)) {

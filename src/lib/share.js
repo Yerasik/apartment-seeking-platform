@@ -1,6 +1,12 @@
 export function getSiteUrl(config = {}) {
   const configured = config.siteUrl?.trim().replace(/\/$/, '');
-  if (configured) return configured;
+  if (configured) {
+    // Collapse accidental duplicated repo path
+    return configured.replace(
+      /^(https?:\/\/[^/]+\/apartment-seeking-platform)(?:\/apartment-seeking-platform)+/i,
+      '$1'
+    );
+  }
 
   if (typeof window !== 'undefined') {
     const base = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
@@ -11,7 +17,12 @@ export function getSiteUrl(config = {}) {
 }
 
 export function buildListingShareUrl(apartment, config = {}) {
-  return `${getSiteUrl(config)}/listings/${apartment.id}.html`;
+  const root = getSiteUrl(config);
+  return `${root}/listings/${apartment.id}.html`;
+}
+
+export function buildAllListingsUrl(config = {}) {
+  return `${getSiteUrl(config)}/#listings`;
 }
 
 export async function checkSharePageLive(shareUrl) {
