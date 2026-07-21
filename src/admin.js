@@ -756,7 +756,14 @@ function setupSettingsForm() {
 
     config = {
       ...config,
-      siteUrl: document.getElementById('cfg-site-url').value.trim().replace(/\/$/, ''),
+      siteUrl: document
+        .getElementById('cfg-site-url')
+        .value.trim()
+        .replace(/\/$/, '')
+        .replace(
+          /^(https?:\/\/[^/]+\/apartment-seeking-platform)(?:\/apartment-seeking-platform)+/i,
+          '$1'
+        ),
       siteName: document.getElementById('cfg-site-name').value.trim(),
       tagline: document.getElementById('cfg-tagline').value.trim(),
       groupName: document.getElementById('cfg-group-name').value.trim(),

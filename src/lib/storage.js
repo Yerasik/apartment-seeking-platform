@@ -4,6 +4,20 @@ const STORAGE_KEYS = {
   config: 'rt_config',
 };
 
+function sanitizeConfig(config) {
+  if (!config || typeof config !== 'object') return config;
+  if (config.siteUrl) {
+    config.siteUrl = String(config.siteUrl)
+      .trim()
+      .replace(/\/$/, '')
+      .replace(
+        /^(https?:\/\/[^/]+\/apartment-seeking-platform)(?:\/apartment-seeking-platform)+/i,
+        '$1'
+      );
+  }
+  return config;
+}
+
 export async function loadConfig() {
   // Prefer committed GitHub config so keys work on every device.
   try {
@@ -24,12 +38,12 @@ export async function loadConfig() {
             contactMessageTemplate:
               fileConfig.contactMessageTemplate || local.contactMessageTemplate || '',
           };
-          return merged;
+          return sanitizeConfig(merged);
         } catch {
-          return fileConfig;
+          return sanitizeConfig(fileConfig);
         }
       }
-      return fileConfig;
+      return sanitizeConfig(fileConfig);
     }
   } catch {
     /* fall through */
@@ -38,13 +52,13 @@ export async function loadConfig() {
   const stored = localStorage.getItem(STORAGE_KEYS.config);
   if (stored) {
     try {
-      return JSON.parse(stored);
+      return sanitizeConfig(JSON.parse(stored));
     } catch {
       /* fall through */
     }
   }
 
-  return getDefaultConfig();
+  return sanitizeConfig(getDefaultConfig());
 }
 
 export async function loadApartments() {
