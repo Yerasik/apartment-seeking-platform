@@ -192,9 +192,9 @@ export function openContactChannel(apartment, message) {
 
 export function getContactLabel(contactType) {
   const labels = {
-    email: '📧 Email landlord',
-    phone: '💬 WhatsApp landlord',
-    telegram: '✈️ Telegram landlord',
+    email: '📧 Email agent',
+    phone: '💬 WhatsApp agent',
+    telegram: '✈️ Telegram agent',
     other: '📋 Copy message',
   };
   return labels[contactType] || labels.other;

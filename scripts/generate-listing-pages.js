@@ -481,7 +481,7 @@ for (const apt of apartments) {
           <div class="actions">
             ${
               whatsappHref
-                ? `<a class="btn btn-wa" href="${escapeHtml(whatsappHref)}">💬 WhatsApp landlord</a>`
+                ? `<a class="btn btn-wa" href="${escapeHtml(whatsappHref)}">💬 WhatsApp agent</a>`
                 : ''
             }
             ${

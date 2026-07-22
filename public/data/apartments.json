@@ -584,5 +584,79 @@
     "featured": true,
     "active": true,
     "createdAt": "2026-07-21T09:41:07.194Z"
+  },
+  {
+    "id": "apt-mrvgxzcj",
+    "title": "<!> Wan Chai Comfortable Suit",
+    "address": "Wan Chai",
+    "price": 7300,
+    "currency": "HKD",
+    "rooms": 1,
+    "kitchen": "none",
+    "bathroom": "private",
+    "furnished": true,
+    "availableFrom": "",
+    "agentName": "Startopone",
+    "listingUrl": "",
+    "imageUrl": "https://vqvmlmgktwgsiperpdwu.supabase.co/storage/v1/object/public/listing-media/draft-mrvgvz6u/1784687551606-7x3onb.jpg",
+    "videoUrl": "",
+    "media": [
+      {
+        "url": "https://vqvmlmgktwgsiperpdwu.supabase.co/storage/v1/object/public/listing-media/draft-mrvgvz6u/1784687551606-7x3onb.jpg",
+        "type": "image"
+      },
+      {
+        "url": "https://vqvmlmgktwgsiperpdwu.supabase.co/storage/v1/object/public/listing-media/draft-mrvgw8bn/1784687563366-723f2h.jpg",
+        "type": "image"
+      }
+    ],
+    "landlordContact": "85265846254",
+    "contactType": "phone",
+    "description": "Comfortable suit with an affordable price",
+    "tags": [
+      "furnished"
+    ],
+    "featured": true,
+    "active": true,
+    "createdAt": "2026-07-22T02:34:03.956Z"
+  },
+  {
+    "id": "apt-mrvh154s",
+    "title": "<!> Wan Chai Furnished Stiduo",
+    "address": "Wan Chai",
+    "price": 7500,
+    "currency": "HKD",
+    "rooms": 1,
+    "kitchen": "none",
+    "bathroom": "private",
+    "furnished": true,
+    "availableFrom": "",
+    "agentName": "Startopone",
+    "listingUrl": "",
+    "imageUrl": "https://vqvmlmgktwgsiperpdwu.supabase.co/storage/v1/object/public/listing-media/draft-mrvgym60/1784687674622-ia793t.jpg",
+    "videoUrl": "",
+    "media": [
+      {
+        "url": "https://vqvmlmgktwgsiperpdwu.supabase.co/storage/v1/object/public/listing-media/draft-mrvgym60/1784687674622-ia793t.jpg",
+        "type": "image"
+      },
+      {
+        "url": "https://vqvmlmgktwgsiperpdwu.supabase.co/storage/v1/object/public/listing-media/draft-mrvgyxz0/1784687689841-2j2ye6.jpg",
+        "type": "image"
+      },
+      {
+        "url": "https://vqvmlmgktwgsiperpdwu.supabase.co/storage/v1/object/public/listing-media/draft-mrvgz5f0/1784687698625-j284gw.jpg",
+        "type": "image"
+      }
+    ],
+    "landlordContact": "85265846254",
+    "contactType": "phone",
+    "description": "Affordable Pricing Suite in Wan Chai",
+    "tags": [
+      "furnished"
+    ],
+    "featured": true,
+    "active": true,
+    "createdAt": "2026-07-22T02:36:31.422Z"
   }
 ]

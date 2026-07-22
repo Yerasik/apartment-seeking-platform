@@ -113,8 +113,8 @@ async function buildCardHtml(apt) {
           <a class="btn btn-primary btn-sm" href="${escapeAttr(buildListingShareUrl(apt, config))}">🖼 View all photos</a>
           ${
             apt.contactType === 'phone' && apt.landlordContact
-              ? `<button class="btn btn-success btn-sm contact-landlord" data-id="${apt.id}">💬 WhatsApp landlord</button>`
-              : `<button class="btn btn-success btn-sm contact-landlord" data-id="${apt.id}">${getContactLabel(apt.contactType)}</button>`
+? `<button class="btn btn-success btn-sm contact-landlord" data-id="${apt.id}">💬 WhatsApp agent</button>`
+                  : `<button class="btn btn-success btn-sm contact-landlord" data-id="${apt.id}">${getContactLabel(apt.contactType)}</button>`
           }
           ${apt.listingUrl ? `<button class="btn btn-secondary btn-sm view-listing" data-id="${apt.id}" data-url="${escapeAttr(apt.listingUrl)}">🔗 View original listing</button>` : ''}
         </div>
