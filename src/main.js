@@ -3,6 +3,7 @@ import {
   loadConfig,
   sortApartmentsNewestFirst,
 } from './lib/storage.js';
+import { ensureLatestBuild } from './lib/versionCheck.js';
 import { trackEvent } from './lib/tracker.js';
 import {
   buildContactMessage,
@@ -19,7 +20,11 @@ let currentApartment = null;
 const galleryById = new Map();
 
 async function init() {
-  [config, apartments] = await Promise.all([loadConfig(), loadApartments()]);
+  await ensureLatestBuild();
+  [config, apartments] = await Promise.all([
+    loadConfig(),
+    loadApartments({ fromFile: true }),
+  ]);
   applyBranding();
   renderListingCount();
   await renderApartments();

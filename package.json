@@ -4,8 +4,9 @@
   "description": "Flat listings, click tracking, and community announcements for Renting Together",
   "type": "module",
   "scripts": {
-    "dev": "npm run generate:listings && vite",
-    "build": "npm run generate:listings && vite build",
+    "dev": "npm run prepare:data && npm run generate:listings && vite",
+    "build": "npm run prepare:data && npm run generate:listings && vite build",
+    "prepare:data": "node scripts/prepare-data.js",
     "generate:listings": "node scripts/generate-listing-pages.js",
     "preview": "vite preview"
   },

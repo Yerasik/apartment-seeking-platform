@@ -70,18 +70,22 @@ export function sortApartmentsNewestFirst(list) {
   });
 }
 
-export async function loadApartments() {
-  const stored = localStorage.getItem(STORAGE_KEYS.apartments);
-  if (stored) {
-    try {
-      return sortApartmentsNewestFirst(JSON.parse(stored));
-    } catch {
-      /* fall through */
+export async function loadApartments({ fromFile = false } = {}) {
+  // Public site always loads the committed JSON so visitors see the latest deploy.
+  // Admin keeps using localStorage so edits stay local until you copy to GitHub.
+  if (!fromFile) {
+    const stored = localStorage.getItem(STORAGE_KEYS.apartments);
+    if (stored) {
+      try {
+        return sortApartmentsNewestFirst(JSON.parse(stored));
+      } catch {
+        /* fall through */
+      }
     }
   }
 
   try {
-    const res = await fetch('./data/apartments.json');
+    const res = await fetch(`./data/apartments.json?t=${Date.now()}`, { cache: 'no-store' });
     if (res.ok) return sortApartmentsNewestFirst(await res.json());
   } catch {
     /* offline */

@@ -9,6 +9,7 @@ import {
   sortApartmentsNewestFirst,
 } from './lib/storage.js';
 import { DEPLOY_SHARE_HINT } from './lib/share.js';
+import { ensureLatestBuild } from './lib/versionCheck.js';
 import { getTotalStats, getApartmentStats, resetStats } from './lib/tracker.js';
 import { sendCommunityAnnouncement } from './lib/messaging.js';
 import { fetchListingPreview } from './lib/linkPreview.js';
@@ -26,7 +27,9 @@ const loginScreen = document.getElementById('login-screen');
 const adminLayout = document.getElementById('admin-layout');
 
 async function init() {
+  await ensureLatestBuild();
   [config, apartments] = await Promise.all([loadConfig(), loadApartments()]);
+  apartments = sortApartmentsNewestFirst(apartments);
 
   if (sessionStorage.getItem('rt_admin_auth') === 'true') {
     showAdmin();
@@ -890,8 +893,9 @@ function setupSettingsForm() {
 function setupExport() {
   document.getElementById('export-apartments').addEventListener('click', async () => {
     try {
+      apartments = sortApartmentsNewestFirst(apartments);
       await copyJsonToClipboard(apartments);
-      showToast('apartments.json copied — paste into public/data/apartments.json on GitHub');
+      showToast('apartments.json copied (newest first) — paste into public/data/apartments.json on GitHub');
       setTimeout(() => showToast(DEPLOY_SHARE_HINT, 'success'), 3500);
     } catch {
       showToast('Could not copy to clipboard', 'error');
