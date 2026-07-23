@@ -1,6 +1,7 @@
 import {
   loadApartments,
   loadConfig,
+  sortApartmentsNewestFirst,
 } from './lib/storage.js';
 import { trackEvent } from './lib/tracker.js';
 import {
@@ -129,7 +130,7 @@ async function renderApartments() {
   const allHeading = document.getElementById('all-listings-heading');
   const grid = document.getElementById('apartments-grid');
   const empty = document.getElementById('empty-state');
-  const active = apartments.filter((a) => a.active !== false);
+  const active = sortApartmentsNewestFirst(apartments.filter((a) => a.active !== false));
 
   galleryById.clear();
 

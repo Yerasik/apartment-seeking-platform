@@ -658,5 +658,114 @@
     "featured": true,
     "active": true,
     "createdAt": "2026-07-22T02:36:31.422Z"
+  },
+  {
+    "id": "apt-mrx79ata",
+    "title": "City View Smart Design Studio",
+    "address": "Mong Kok",
+    "price": 9500,
+    "currency": "HKD",
+    "rooms": 1,
+    "kitchen": "separate",
+    "bathroom": "private",
+    "furnished": true,
+    "availableFrom": "",
+    "agentName": "Startopone",
+    "listingUrl": "",
+    "imageUrl": "https://vqvmlmgktwgsiperpdwu.supabase.co/storage/v1/object/public/listing-media/draft-mrx76xdz/1784792197827-fzsbts.jpg",
+    "videoUrl": "",
+    "media": [
+      {
+        "url": "https://vqvmlmgktwgsiperpdwu.supabase.co/storage/v1/object/public/listing-media/draft-mrx76xdz/1784792197827-fzsbts.jpg",
+        "type": "image"
+      },
+      {
+        "url": "https://vqvmlmgktwgsiperpdwu.supabase.co/storage/v1/object/public/listing-media/draft-mrx781a3/1784792249456-og3k45.jpg",
+        "type": "image"
+      },
+      {
+        "url": "https://vqvmlmgktwgsiperpdwu.supabase.co/storage/v1/object/public/listing-media/draft-mrx7871w/1784792256890-6x7v0l.jpg",
+        "type": "image"
+      }
+    ],
+    "landlordContact": "85265846254",
+    "contactType": "phone",
+    "description": "",
+    "tags": [
+      "furnished"
+    ],
+    "featured": true,
+    "active": true,
+    "createdAt": "2026-07-23T07:38:28.224Z"
+  },
+  {
+    "id": "apt-mrx7e3st",
+    "title": "Furnished Ready to Move In Studio in Causeway Bay",
+    "address": "Great George Building 27 Paterson Street, Causeway Bay",
+    "price": 7800,
+    "currency": "HKD",
+    "rooms": 1,
+    "kitchen": "separate",
+    "bathroom": "private",
+    "furnished": true,
+    "availableFrom": "",
+    "agentName": "",
+    "listingUrl": "",
+    "imageUrl": "https://vqvmlmgktwgsiperpdwu.supabase.co/storage/v1/object/public/listing-media/draft-mrx7bx3k/1784792431051-rh3lzw.jpg",
+    "videoUrl": "https://vqvmlmgktwgsiperpdwu.supabase.co/storage/v1/object/public/listing-media/draft-mrx7ckwa/1784792461264-omxew4.mp4",
+    "media": [
+      {
+        "url": "https://vqvmlmgktwgsiperpdwu.supabase.co/storage/v1/object/public/listing-media/draft-mrx7bx3k/1784792431051-rh3lzw.jpg",
+        "type": "image"
+      },
+      {
+        "url": "https://vqvmlmgktwgsiperpdwu.supabase.co/storage/v1/object/public/listing-media/draft-mrx7c4yn/1784792441653-f7yft9.jpg",
+        "type": "image"
+      },
+      {
+        "url": "https://vqvmlmgktwgsiperpdwu.supabase.co/storage/v1/object/public/listing-media/draft-mrx7ckwa/1784792461264-omxew4.mp4",
+        "type": "video"
+      }
+    ],
+    "landlordContact": "85265846254",
+    "contactType": "phone",
+    "description": "",
+    "tags": [
+      "furnished"
+    ],
+    "featured": true,
+    "active": true,
+    "createdAt": "2026-07-23T07:42:12.416Z"
+  },
+  {
+    "id": "apt-mrx7foz5",
+    "title": "Wan Chai Hotel-Like Suite",
+    "address": "4/F  Queen’s Road Eaat Wan Chai",
+    "price": 7500,
+    "currency": "HKD",
+    "rooms": 1,
+    "kitchen": "separate",
+    "bathroom": "private",
+    "furnished": true,
+    "availableFrom": "",
+    "agentName": "",
+    "listingUrl": "",
+    "imageUrl": "https://vqvmlmgktwgsiperpdwu.supabase.co/storage/v1/object/public/listing-media/draft-mrx7eiak/1784792551413-0wabom.jpg",
+    "videoUrl": "",
+    "media": [
+      {
+        "url": "https://vqvmlmgktwgsiperpdwu.supabase.co/storage/v1/object/public/listing-media/draft-mrx7eiak/1784792551413-0wabom.jpg",
+        "type": "image"
+      }
+    ],
+    "landlordContact": "85265846254",
+    "contactType": "phone",
+    "description": "No Lift",
+    "tags": [
+      "furnished"
+    ],
+    "featured": true,
+    "active": true,
+    "createdAt": "2026-07-23T07:43:26.516Z"
   }
 ]

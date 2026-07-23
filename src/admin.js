@@ -6,6 +6,7 @@ import {
   generateId,
   copyJsonToClipboard,
   showToast,
+  sortApartmentsNewestFirst,
 } from './lib/storage.js';
 import { DEPLOY_SHARE_HINT } from './lib/share.js';
 import { getTotalStats, getApartmentStats, resetStats } from './lib/tracker.js';
@@ -50,11 +51,18 @@ async function init() {
   setupSettingsForm();
   setupExport();
   setupAgentFilter();
+  setupAgentAutofill();
 }
 
 function showAdmin() {
   loginScreen.hidden = true;
   adminLayout.hidden = false;
+  // Seed / refresh saved agent contacts from existing flats
+  const agents = getAgentDirectory();
+  if (agents.length) {
+    config = { ...config, agents };
+    saveConfig(config);
+  }
   renderApartmentsTable();
   renderStats();
   populateSettingsForm();
@@ -76,6 +84,7 @@ function setupNavigation() {
 
 async function renderApartmentsTable() {
   refreshAgentSuggestions();
+  apartments = sortApartmentsNewestFirst(apartments);
   const tbody = document.getElementById('apartments-tbody');
   const rows = await Promise.all(
     apartments.map(async (apt) => {
@@ -161,7 +170,7 @@ function editApartment(id) {
 function deleteApartment(id) {
   if (!confirm('Delete this apartment?')) return;
   apartments = apartments.filter((a) => a.id !== id);
-  saveApartments(apartments);
+  apartments = saveApartments(apartments);
   renderApartmentsTable();
   showToast('Apartment deleted');
 }
@@ -293,11 +302,105 @@ function syncCoverField() {
   }
 }
 
+function normalizeAgentName(name) {
+  return (name || '').trim();
+}
+
+function getAgentDirectory() {
+  const map = new Map();
+
+  for (const agent of Array.isArray(config.agents) ? config.agents : []) {
+    const name = normalizeAgentName(agent.name);
+    if (!name) continue;
+    map.set(name.toLowerCase(), {
+      name,
+      contact: (agent.contact || '').trim(),
+      contactType: agent.contactType || 'phone',
+    });
+  }
+
+  // Newest apartments win if config is missing contact for that agent
+  for (const apt of sortApartmentsNewestFirst(apartments)) {
+    const name = normalizeAgentName(apt.agentName);
+    const contact = (apt.landlordContact || '').trim();
+    if (!name || !contact) continue;
+    const key = name.toLowerCase();
+    const existing = map.get(key);
+    if (!existing || !existing.contact) {
+      map.set(key, {
+        name: existing?.name || name,
+        contact,
+        contactType: apt.contactType || existing?.contactType || 'phone',
+      });
+    }
+  }
+
+  return [...map.values()].sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function upsertAgent(name, contact, contactType) {
+  const agentName = normalizeAgentName(name);
+  const agentContact = (contact || '').trim();
+  if (!agentName || !agentContact) return;
+
+  const agents = getAgentDirectory().filter(
+    (a) => a.name.toLowerCase() !== agentName.toLowerCase()
+  );
+  agents.push({
+    name: agentName,
+    contact: agentContact,
+    contactType: contactType || 'phone',
+  });
+  agents.sort((a, b) => a.name.localeCompare(b.name));
+
+  config = { ...config, agents };
+  saveConfig(config);
+}
+
+function applySavedAgentContact(name, { overwrite = true } = {}) {
+  const key = normalizeAgentName(name).toLowerCase();
+  if (!key) return false;
+
+  const agent = getAgentDirectory().find((a) => a.name.toLowerCase() === key);
+  if (!agent?.contact) return false;
+
+  const contactEl = document.getElementById('apt-contact');
+  const typeEl = document.getElementById('apt-contact-type');
+
+  if (overwrite || !contactEl.value.trim()) {
+    contactEl.value = agent.contact;
+  }
+  if (overwrite || typeEl.value === 'email') {
+    typeEl.value = agent.contactType || 'phone';
+  }
+  return true;
+}
+
 function refreshAgentSuggestions() {
   const list = document.getElementById('agent-suggestions');
   if (!list) return;
-  const names = [...new Set(apartments.map((a) => (a.agentName || '').trim()).filter(Boolean))].sort();
-  list.innerHTML = names.map((n) => `<option value="${escapeHtml(n)}"></option>`).join('');
+  list.innerHTML = getAgentDirectory()
+    .map((a) => `<option value="${escapeHtml(a.name)}"></option>`)
+    .join('');
+}
+
+function setupAgentAutofill() {
+  const agentInput = document.getElementById('apt-agent');
+  if (!agentInput) return;
+
+  const fill = () => {
+    applySavedAgentContact(agentInput.value, { overwrite: true });
+  };
+
+  agentInput.addEventListener('change', fill);
+  agentInput.addEventListener('blur', fill);
+  agentInput.addEventListener('input', () => {
+    // Datalist picks often fire input with the full matching name
+    const name = normalizeAgentName(agentInput.value);
+    if (!name) return;
+    const match = getAgentDirectory().find((a) => a.name.toLowerCase() === name.toLowerCase());
+    if (match) applySavedAgentContact(match.name, { overwrite: true });
+  });
 }
 
 function setupAgentFilter() {
@@ -497,10 +600,12 @@ function setupApartmentForm() {
     if (editingId) {
       apartments = apartments.map((a) => (a.id === editingId ? apt : a));
     } else {
-      apartments.push(apt);
+      apartments.unshift(apt);
     }
 
-    saveApartments(apartments);
+    apartments = saveApartments(apartments);
+    upsertAgent(apt.agentName, apt.landlordContact, apt.contactType);
+    refreshAgentSuggestions();
 
     const shouldAnnounce = document.getElementById('apt-announce').checked;
     if (shouldAnnounce) {
@@ -585,7 +690,7 @@ async function renderStats() {
 
   renderAgentSummary(totals);
 
-  const rows = filteredApts.map((apt) => {
+  const rows = sortApartmentsNewestFirst(filteredApts).map((apt) => {
     const views = totals.perApartment.views?.[apt.id] || 0;
     const clicks = totals.perApartment.clicks?.[apt.id] || 0;
     const messages = totals.perApartment.messages?.[apt.id] || 0;
@@ -774,6 +879,7 @@ function setupSettingsForm() {
       adminPassword: document.getElementById('cfg-admin-password').value.trim(),
       supabaseUrl: document.getElementById('cfg-supabase-url').value.trim(),
       supabaseAnonKey: document.getElementById('cfg-supabase-key').value.trim(),
+      agents: getAgentDirectory(),
     };
 
     saveConfig(config);
@@ -819,8 +925,8 @@ function setupExport() {
       const text = await file.text();
       const data = JSON.parse(text);
       if (!Array.isArray(data)) throw new Error('Expected an array');
-      apartments = data;
-      saveApartments(apartments);
+      apartments = sortApartmentsNewestFirst(data);
+      apartments = saveApartments(apartments);
       renderApartmentsTable();
       showToast(`Imported ${data.length} apartments`);
     } catch (err) {

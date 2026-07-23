@@ -61,11 +61,20 @@ export async function loadConfig() {
   return sanitizeConfig(getDefaultConfig());
 }
 
+export function sortApartmentsNewestFirst(list) {
+  return [...(list || [])].sort((a, b) => {
+    const ta = Date.parse(a?.createdAt || '') || 0;
+    const tb = Date.parse(b?.createdAt || '') || 0;
+    if (tb !== ta) return tb - ta;
+    return String(b?.id || '').localeCompare(String(a?.id || ''));
+  });
+}
+
 export async function loadApartments() {
   const stored = localStorage.getItem(STORAGE_KEYS.apartments);
   if (stored) {
     try {
-      return JSON.parse(stored);
+      return sortApartmentsNewestFirst(JSON.parse(stored));
     } catch {
       /* fall through */
     }
@@ -73,7 +82,7 @@ export async function loadApartments() {
 
   try {
     const res = await fetch('./data/apartments.json');
-    if (res.ok) return await res.json();
+    if (res.ok) return sortApartmentsNewestFirst(await res.json());
   } catch {
     /* offline */
   }
@@ -102,7 +111,9 @@ export async function loadStats() {
 }
 
 export function saveApartments(apartments) {
-  localStorage.setItem(STORAGE_KEYS.apartments, JSON.stringify(apartments));
+  const sorted = sortApartmentsNewestFirst(apartments);
+  localStorage.setItem(STORAGE_KEYS.apartments, JSON.stringify(sorted));
+  return sorted;
 }
 
 export function saveConfig(config) {
@@ -128,6 +139,7 @@ export function getDefaultConfig() {
     telegramWebhookUrl: '',
     supabaseUrl: '',
     supabaseAnonKey: '',
+    agents: [],
     announcementTemplate:
       '🏠 *New flat available!*\n\n*{title}*\n📍 {address}\n💰 {price} {currency}/month\n🛏 {rooms} room(s) · 🍳 Kitchen: {kitchen}\n📅 Available from: {availableFrom}\n\n{description}\n\n🔗 [View listing]({listingUrl})',
   };
